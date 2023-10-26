@@ -1,10 +1,10 @@
 from app import app, db
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
 
-# def seed_database():
-#     with app.app_context():
-#         # Create the database tables
-#         db.create_all()
+def seed_database():
+    with app.app_context():
+        # Create the database tables
+        db.create_all()
 
 #         # Create and add user records
 #         user1 = User(first_name='Aleki', last_name='Alex', email='alexi@gmail.com', password='wordpass')
