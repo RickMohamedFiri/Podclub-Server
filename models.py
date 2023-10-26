@@ -43,16 +43,16 @@ class User(db.Model):
             raise ValueError("Password must be at least 6 characters long.")
         return password
 
-# #channels table 
-# class Channel(db.Model):
-#     __tablename__ = 'channels'
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(255), nullable=False)
-#     description = db.Column(db.String(255), nullable=False)
-#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-#     messages = db.relationship('Message', backref='channel', lazy=True)
-#     group_messages = db.relationship('GroupMessage', backref='channel', lazy=True)
+#channels table 
+class Channel(db.Model):
+    __tablename__ = 'channels'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    messages = db.relationship('Message', backref='channel', lazy=True)
+    group_messages = db.relationship('GroupMessage', backref='channel', lazy=True)
 
 # #messsage table 
 # class Message(db.Model):
