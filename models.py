@@ -95,12 +95,12 @@ class ReportedMessage(db.Model):
     __table_args__ = (db.ForeignKeyConstraint([reporting_user_id], ['users.id']),)
     
     
-# #inivitations table 
-# class Invitation(db.Model):
-#     __tablename__ = 'invitations'
-#     id = db.Column(db.Integer, primary_key=True, nullable=False)
-#     sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-#     invitation_date = db.Column(db.Date, nullable=False)
+#inivitations table 
+class Invitation(db.Model):
+    __tablename__ = 'invitations'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    invitation_date = db.Column(db.Date, nullable=False)
 
