@@ -83,16 +83,16 @@ class ReportedUser(db.Model):
     report_date = db.Column(db.DateTime, nullable=False)
     is_banned = db.Column(db.Boolean, nullable=False)
     
-# #reported_messages table 
-# class ReportedMessage(db.Model):
-#     __tablename__ = 'reported_messages'
-#     id = db.Column(db.Integer, primary_key=True)
-#     reporting_user_id =db. Column(db.Integer,db.ForeignKey('users.id'))
-#     user_id = db.Column(db.Integer,db.ForeignKey('users.id'))
-#     message_id = db.Column(db.Integer, db.ForeignKey('messages.id'))
-#     report_date = db.Column(db.DateTime, nullable=False)
-#     is_banned = db.Column(db.Boolean, nullable=False)
-#     __table_args__ = (db.ForeignKeyConstraint([reporting_user_id], ['users.id']),)
+#reported_messages table 
+class ReportedMessage(db.Model):
+    __tablename__ = 'reported_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    reporting_user_id =db. Column(db.Integer,db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+    message_id = db.Column(db.Integer, db.ForeignKey('messages.id'))
+    report_date = db.Column(db.DateTime, nullable=False)
+    is_banned = db.Column(db.Boolean, nullable=False)
+    __table_args__ = (db.ForeignKeyConstraint([reporting_user_id], ['users.id']),)
     
     
 # #inivitations table 
