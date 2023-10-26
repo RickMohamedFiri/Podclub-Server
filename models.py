@@ -18,30 +18,30 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     verification_token = db.Column(db.String(64), unique=True)
 
-#     # relationships with other tables
-#     channels = db.relationship('Channel', backref='user', lazy=True)
-#     messages = db.relationship('Message', backref='user', lazy=True)
+    # relationships with other tables
+    channels = db.relationship('Channel', backref='user', lazy=True)
+    messages = db.relationship('Message', backref='user', lazy=True)
 
-#     # Relationship with ReportedUser
-#     # Using the `ReportedUser.reporting_user_id` foreign key
-#     reported_users = db.relationship('ReportedUser', backref='reporting_user', foreign_keys='ReportedUser.reporting_user_id', lazy=True)
+    # Relationship with ReportedUser
+    # Using the `ReportedUser.reporting_user_id` foreign key
+    reported_users = db.relationship('ReportedUser', backref='reporting_user', foreign_keys='ReportedUser.reporting_user_id', lazy=True)
 
-#     # Relationship with ReportedMessage
-#     # Using the `ReportedMessage.user_id` foreign key
-#     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
+    # Relationship with ReportedMessage
+    # Using the `ReportedMessage.user_id` foreign key
+    reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
 
-#      #email and password validations 
-#     @validates('email')
-#     def validate_email(self, key, email):
-#         if '@' not in email:
-#             raise ValueError('Invalid email format. Must contain "@"')
-#         return email
+     #email and password validations 
+    @validates('email')
+    def validate_email(self, key, email):
+        if '@' not in email:
+            raise ValueError('Invalid email format. Must contain "@"')
+        return email
     
-#     @validates('password')
-#     def validate_password(self, key, password):
-#         if len(password) < 6:
-#             raise ValueError("Password must be at least 6 characters long.")
-#         return password
+    @validates('password')
+    def validate_password(self, key, password):
+        if len(password) < 6:
+            raise ValueError("Password must be at least 6 characters long.")
+        return password
 
 # #channels table 
 # class Channel(db.Model):
