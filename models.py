@@ -1,22 +1,22 @@
-# from flask_sqlalchemy import SQLAlchemy
-# from datetime import datetime
-# from sqlalchemy.orm import validates
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from sqlalchemy.orm import validates
 
-# db = SQLAlchemy()
-# #classes tables 
+db = SQLAlchemy()
+#classes tables 
 
 
-# #uses class table
+#uses class table
 
-# class User(db.Model):
-#     __tablename__ = 'users'
-#     id = db.Column(db.Integer, primary_key=True)
-#     first_name = db.Column(db.String(100))
-#     last_name = db.Column(db.String(100))
-#     email = db.Column(db.String(100), unique=True, nullable=False)
-#     password = db.Column(db.String(255), nullable=False)
-#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-#     verification_token = db.Column(db.String(64), unique=True)
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    verification_token = db.Column(db.String(64), unique=True)
 
 #     # relationships with other tables
 #     channels = db.relationship('Channel', backref='user', lazy=True)
