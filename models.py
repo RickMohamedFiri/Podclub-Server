@@ -73,15 +73,15 @@ class GroupMessage(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# #reported_users table
-# class ReportedUser(db.Model):
-#     __tablename__ = 'reported_users'
-#     id = db.Column(db.Integer, primary_key=True, nullable=False)
-#     reporting_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     message_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=False)
-#     report_date = db.Column(db.DateTime, nullable=False)
-#     is_banned = db.Column(db.Boolean, nullable=False)
+#reported_users table
+class ReportedUser(db.Model):
+    __tablename__ = 'reported_users'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    reporting_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    message_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=False)
+    report_date = db.Column(db.DateTime, nullable=False)
+    is_banned = db.Column(db.Boolean, nullable=False)
     
 # #reported_messages table 
 # class ReportedMessage(db.Model):
