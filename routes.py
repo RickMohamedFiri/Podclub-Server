@@ -1,9 +1,9 @@
-# from flask import jsonify, request
-# from app import app, db
-# from flask_cors import CORS
-# from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from flask import jsonify, request
+from app import app, db
+from flask_cors import CORS
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
 
-# CORS(app)
+CORS(app)
 
 # @app.route('/')
 # def message():
