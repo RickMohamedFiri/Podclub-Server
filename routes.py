@@ -5,9 +5,9 @@ from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedM
 
 CORS(app)
 
-# @app.route('/')
-# def message():
-#     return 'welcome to the channels api'
+@app.route('/')
+def message():
+    return 'welcome to the channels api'
 
 
 # # Create User endpoint
