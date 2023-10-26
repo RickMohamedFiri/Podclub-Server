@@ -6,13 +6,13 @@ def seed_database():
         # Create the database tables
         db.create_all()
 
-#         # Create and add user records
-#         user1 = User(first_name='Aleki', last_name='Alex', email='alexi@gmail.com', password='wordpass')
-#         user2 = User(first_name='Jamex', last_name='Xemas', email='jamex@gmail.com', password='jamojam')
+        # Create and add user records
+        user1 = User(first_name='Aleki', last_name='Alex', email='alexi@gmail.com', password='wordpass')
+        user2 = User(first_name='Jamex', last_name='Xemas', email='jamex@gmail.com', password='jamojam')
 
-#         # Add users to the session
-#         db.session.add_all([user1, user2])
-#         db.session.commit()
+        # Add users to the session
+        db.session.add_all([user1, user2])
+        db.session.commit()
 
 #         # Create and add channel records
 #         channel1 = Channel(name='Channel 1', description='Description 1', user_id=user1.id)
