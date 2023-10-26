@@ -22,13 +22,13 @@ def seed_database():
         db.session.add_all([channel1, channel2])
         db.session.commit()
 
-#         # Create and add message records
-#         message1 = Message(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
-#         message2 = Message(message='Hi there!', user_id=user2.id, channel_id=channel1.id)
+        # Create and add message records
+        message1 = Message(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
+        message2 = Message(message='Hi there!', user_id=user2.id, channel_id=channel1.id)
 
-#         # Add messages to the session
-#         db.session.add_all([message1, message2])
-#         db.session.commit()
+        # Add messages to the session
+        db.session.add_all([message1, message2])
+        db.session.commit()
 
 #         # Create and add group message records
 #         group_message1 = GroupMessage(channel_id=channel1.id, user_id=user1.id)
