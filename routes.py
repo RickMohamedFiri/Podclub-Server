@@ -145,43 +145,43 @@ def delete_group_message(group_message_id):
         return jsonify({'message': 'Group message not found'}, 404)
 
 
-# # ReportedUser endpoint
-# @app.route('/reported_users', methods=['POST'])
-# def create_reported_user():
-#     new_reported_user = ReportedUser(reporting_user_id=request.json['reporting_user_id'], reported_user_id=request.json['reported_user_id'], message_id=request.json['message_id'], is_banned=request.json['is_banned'])
-#     db.session.add(new_reported_user)
-#     db.session.commit()
-#     return jsonify({'message': 'Reported user created successfully'})
+# ReportedUser endpoint
+@app.route('/reported_users', methods=['POST'])
+def create_reported_user():
+    new_reported_user = ReportedUser(reporting_user_id=request.json['reporting_user_id'], reported_user_id=request.json['reported_user_id'], message_id=request.json['message_id'], is_banned=request.json['is_banned'])
+    db.session.add(new_reported_user)
+    db.session.commit()
+    return jsonify({'message': 'Reported user created successfully'})
 
-# # All ReportedUsers endpoint
-# @app.route('/reported_users', methods=['GET'])
-# def get_all_reported_users():
-#     reported_users = ReportedUser.query.all()
-#     reported_user_list = [{'id': reported_user.id, 'reporting_user_id': reported_user.reporting_user_id, 'reported_user_id': reported_user.reported_user_id, 'message_id': reported_user.message_id, 'is_banned': reported_user.is_banned} for reported_user in reported_users]
-#     return jsonify(reported_user_list)
+# All ReportedUsers endpoint
+@app.route('/reported_users', methods=['GET'])
+def get_all_reported_users():
+    reported_users = ReportedUser.query.all()
+    reported_user_list = [{'id': reported_user.id, 'reporting_user_id': reported_user.reporting_user_id, 'reported_user_id': reported_user.reported_user_id, 'message_id': reported_user.message_id, 'is_banned': reported_user.is_banned} for reported_user in reported_users]
+    return jsonify(reported_user_list)
 
-# # Update ReportedUser endpoint
-# @app.route('/reported_users/<int:reported_user_id>', methods=['PATCH'])
-# def update_reported_user(reported_user_id):
-#     reported_user = ReportedUser.query.get(reported_user_id)
-#     if reported_user:
-#         reported_user.reporting_user_id = request.json.get('reporting_user_id', reported_user.reporting_user_id)
-#         reported_user.reported_user_id = request.json.get('reported_user_id', reported_user.reported_user_id)
-#         reported_user.message_id = request.json.get('message_id', reported_user.message_id)
-#         reported_user.is_banned = request.json.get('is_banned', reported_user.is_banned)
-#         db.session.commit()
-#         return jsonify({'message': 'Reported user updated successfully'})
-#     else:
-#         return jsonify({'message': 'Reported user not found'}, 404)
+# Update ReportedUser endpoint
+@app.route('/reported_users/<int:reported_user_id>', methods=['PATCH'])
+def update_reported_user(reported_user_id):
+    reported_user = ReportedUser.query.get(reported_user_id)
+    if reported_user:
+        reported_user.reporting_user_id = request.json.get('reporting_user_id', reported_user.reporting_user_id)
+        reported_user.reported_user_id = request.json.get('reported_user_id', reported_user.reported_user_id)
+        reported_user.message_id = request.json.get('message_id', reported_user.message_id)
+        reported_user.is_banned = request.json.get('is_banned', reported_user.is_banned)
+        db.session.commit()
+        return jsonify({'message': 'Reported user updated successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
 
-# # Delete ReportedUser endpoint
-# @app.route('/reported_users/<int:reported_user_id>', methods=['DELETE'])
-# def delete_reported_user(reported_user_id):
-#     reported_user = ReportedUser.query.get(reported_user_id)
-#     if reported_user:
-#         db.session.delete(reported_user)
-#         db.session.commit()
-#         return jsonify({'message': 'Reported user deleted successfully'})
-#     else:
-#         return jsonify({'message': 'Reported user not found'}, 404)
+# Delete ReportedUser endpoint
+@app.route('/reported_users/<int:reported_user_id>', methods=['DELETE'])
+def delete_reported_user(reported_user_id):
+    reported_user = ReportedUser.query.get(reported_user_id)
+    if reported_user:
+        db.session.delete(reported_user)
+        db.session.commit()
+        return jsonify({'message': 'Reported user deleted successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
 
