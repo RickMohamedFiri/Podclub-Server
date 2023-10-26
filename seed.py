@@ -30,13 +30,13 @@ def seed_database():
         db.session.add_all([message1, message2])
         db.session.commit()
 
-#         # Create and add group message records
-#         group_message1 = GroupMessage(channel_id=channel1.id, user_id=user1.id)
-#         group_message2 = GroupMessage(channel_id=channel2.id, user_id=user2.id)
+        # Create and add group message records
+        group_message1 = GroupMessage(channel_id=channel1.id, user_id=user1.id)
+        group_message2 = GroupMessage(channel_id=channel2.id, user_id=user2.id)
 
-#         # Add group messages to the session
-#         db.session.add_all([group_message1, group_message2])
-#         db.session.commit()
+        # Add group messages to the session
+        db.session.add_all([group_message1, group_message2])
+        db.session.commit()
 
 #         # Create and add reported user records
 #         reported_user1 = ReportedUser(reporting_user_id=user1.id, reported_user_id=user2.id, message_id=message1.id)
