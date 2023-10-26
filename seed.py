@@ -38,13 +38,13 @@ def seed_database():
         db.session.add_all([group_message1, group_message2])
         db.session.commit()
 
-#         # Create and add reported user records
-#         reported_user1 = ReportedUser(reporting_user_id=user1.id, reported_user_id=user2.id, message_id=message1.id)
-#         reported_user2 = ReportedUser(reporting_user_id=user2.id, reported_user_id=user1.id, message_id=message2.id)
+        # Create and add reported user records
+        reported_user1 = ReportedUser(reporting_user_id=user1.id, reported_user_id=user2.id, message_id=message1.id)
+        reported_user2 = ReportedUser(reporting_user_id=user2.id, reported_user_id=user1.id, message_id=message2.id)
 
-#         # Add reported users to the session
-#         db.session.add_all([reported_user1, reported_user2])
-#         db.session.commit()
+        # Add reported users to the session
+        db.session.add_all([reported_user1, reported_user2])
+        db.session.commit()
 
 #         # Create and add reported message records
 #         reported_message1 = ReportedMessage(reporting_user_id=user1.id, user_id=user2.id, message_id=message1.id)
