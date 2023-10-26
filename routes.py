@@ -39,33 +39,33 @@ def update_user(user_id):
     else:
         return jsonify({'message': 'User not found'}, 404)
 
-# # Create Channel endpoint
-# @app.route('/channels', methods=['POST'])
-# def create_channel():
-#     new_channel = Channel(name=request.json['name'], description=request.json['description'], user_id=request.json['user_id'])
-#     db.session.add(new_channel)
-#     db.session.commit()
-#     return jsonify({'message': 'Channel created successfully'})
+# Create Channel endpoint
+@app.route('/channels', methods=['POST'])
+def create_channel():
+    new_channel = Channel(name=request.json['name'], description=request.json['description'], user_id=request.json['user_id'])
+    db.session.add(new_channel)
+    db.session.commit()
+    return jsonify({'message': 'Channel created successfully'})
 
-# # Get all Channels endpoint
-# @app.route('/channels', methods=['GET'])
-# def get_all_channels():
-#     channels = Channel.query.all()
-#     channel_list = [{'id': channel.id, 'name': channel.name, 'description': channel.description} for channel in channels]
-#     return jsonify(channel_list)
+# Get all Channels endpoint
+@app.route('/channels', methods=['GET'])
+def get_all_channels():
+    channels = Channel.query.all()
+    channel_list = [{'id': channel.id, 'name': channel.name, 'description': channel.description} for channel in channels]
+    return jsonify(channel_list)
 
-# # Update Channel endpoint
-# @app.route('/channels/<int:channel_id>', methods=['PATCH'])
-# def update_channel(channel_id):
-#     channel = Channel.query.get(channel_id)
-#     if channel:
-#         channel.name = request.json.get('name', channel.name)
-#         channel.description = request.json.get('description', channel.description)
-#         channel.user_id = request.json.get('user_id', channel.user_id)
-#         db.session.commit()
-#         return jsonify({'message': 'Channel updated successfully'})
-#     else:
-#         return jsonify({'message': 'Channel not found'}, 404)
+# Update Channel endpoint
+@app.route('/channels/<int:channel_id>', methods=['PATCH'])
+def update_channel(channel_id):
+    channel = Channel.query.get(channel_id)
+    if channel:
+        channel.name = request.json.get('name', channel.name)
+        channel.description = request.json.get('description', channel.description)
+        channel.user_id = request.json.get('user_id', channel.user_id)
+        db.session.commit()
+        return jsonify({'message': 'Channel updated successfully'})
+    else:
+        return jsonify({'message': 'Channel not found'}, 404)
 
 # # Message endpoint
 # @app.route('/messages', methods=['POST'])
