@@ -10,34 +10,34 @@ def message():
     return 'welcome to the channels api'
 
 
-# # Create User endpoint
-# @app.route('/users', methods=['POST'])
-# def create_user():
-#     new_user = User(first_name=request.json['first_name'],last_name=request.json['last_name'], email=request.json['email'], password=request.json['password'])
-#     db.session.add(new_user)
-#     db.session.commit()
-#     return jsonify({'message': 'User created successfully'})
+# Create User endpoint
+@app.route('/users', methods=['POST'])
+def create_user():
+    new_user = User(first_name=request.json['first_name'],last_name=request.json['last_name'], email=request.json['email'], password=request.json['password'])
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({'message': 'User created successfully'})
 
-# # Get all Users endpoint
-# @app.route('/users', methods=['GET'])
-# def get_all_users():
-#     users = User.query.all()
-#     user_list = [{'id': user.id, 'first_name': user.first_name,'last_name':user.last_name, 'email': user.email} for user in users]
-#     return jsonify(user_list)
+# Get all Users endpoint
+@app.route('/users', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    user_list = [{'id': user.id, 'first_name': user.first_name,'last_name':user.last_name, 'email': user.email} for user in users]
+    return jsonify(user_list)
 
-# # Update User endpoint
-# @app.route('/users/<int:user_id>', methods=['PATCH'])
-# def update_user(user_id):
-#     user = User.query.get(user_id)
-#     if user:
-#         user.first_name = request.json.get('first_name', user.first_name)
-#         user.last_name = request.json.get('last_name', user.last_name)
-#         user.email = request.json.get('email', user.email)
-#         user.password = request.json.get('password', user.password)
-#         db.session.commit()
-#         return jsonify({'message': 'User updated successfully'})
-#     else:
-#         return jsonify({'message': 'User not found'}, 404)
+# Update User endpoint
+@app.route('/users/<int:user_id>', methods=['PATCH'])
+def update_user(user_id):
+    user = User.query.get(user_id)
+    if user:
+        user.first_name = request.json.get('first_name', user.first_name)
+        user.last_name = request.json.get('last_name', user.last_name)
+        user.email = request.json.get('email', user.email)
+        user.password = request.json.get('password', user.password)
+        db.session.commit()
+        return jsonify({'message': 'User updated successfully'})
+    else:
+        return jsonify({'message': 'User not found'}, 404)
 
 # # Create Channel endpoint
 # @app.route('/channels', methods=['POST'])
