@@ -65,13 +65,13 @@ class Message(db.Model):
     parent_message_id = db.Column(db.Integer, db.ForeignKey('messages.id'))
     reported_messages = db.relationship('ReportedMessage', backref='message', foreign_keys='ReportedMessage.message_id', lazy=True)
 
-# #groups_messages 
-# class GroupMessage(db.Model):
-#     __tablename__ = 'group_messages'
-#     id = db.Column(db.Integer, primary_key=True, nullable=False)
-#     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+#groups_messages 
+class GroupMessage(db.Model):
+    __tablename__ = 'group_messages'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # #reported_users table
 # class ReportedUser(db.Model):
