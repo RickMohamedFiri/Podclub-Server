@@ -14,13 +14,13 @@ def seed_database():
         db.session.add_all([user1, user2])
         db.session.commit()
 
-#         # Create and add channel records
-#         channel1 = Channel(name='Channel 1', description='Description 1', user_id=user1.id)
-#         channel2 = Channel(name='Channel 2', description='Description 2', user_id=user2.id)
+        # Create and add channel records
+        channel1 = Channel(name='Channel 1', description='Description 1', user_id=user1.id)
+        channel2 = Channel(name='Channel 2', description='Description 2', user_id=user2.id)
 
-#         # Add channels to the session
-#         db.session.add_all([channel1, channel2])
-#         db.session.commit()
+        # Add channels to the session
+        db.session.add_all([channel1, channel2])
+        db.session.commit()
 
 #         # Create and add message records
 #         message1 = Message(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
