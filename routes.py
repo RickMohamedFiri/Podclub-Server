@@ -106,43 +106,43 @@ def delete_message(message_id):
     else:
         return jsonify({'message': 'Message not found'}, 404)
 
-# # Create GroupMessage endpoint
-# @app.route('/group_messages', methods=['POST'])
-# def create_group_message():
-#     new_group_message = GroupMessage(channel_id=request.json['channel_id'], user_id=request.json['user_id'])
-#     db.session.add(new_group_message)
-#     db.session.commit()
-#     return jsonify({'message': 'Group message created successfully'})
+# Create GroupMessage endpoint
+@app.route('/group_messages', methods=['POST'])
+def create_group_message():
+    new_group_message = GroupMessage(channel_id=request.json['channel_id'], user_id=request.json['user_id'])
+    db.session.add(new_group_message)
+    db.session.commit()
+    return jsonify({'message': 'Group message created successfully'})
 
-# # Get all GroupMessages endpoint
-# @app.route('/group_messages', methods=['GET'])
-# def get_all_group_messages():
-#     group_messages = GroupMessage.query.all()
-#     group_message_list = [{'id': group_message.id, 'channel_id': group_message.channel_id, 'user_id': group_message.user_id} for group_message in group_messages]
-#     return jsonify(group_message_list)
+# Get all GroupMessages endpoint
+@app.route('/group_messages', methods=['GET'])
+def get_all_group_messages():
+    group_messages = GroupMessage.query.all()
+    group_message_list = [{'id': group_message.id, 'channel_id': group_message.channel_id, 'user_id': group_message.user_id} for group_message in group_messages]
+    return jsonify(group_message_list)
 
-# # Update GroupMessage endpoint
-# @app.route('/group_messages/<int:group_message_id>', methods=['PATCH'])
-# def update_group_message(group_message_id):
-#     group_message = GroupMessage.query.get(group_message_id)
-#     if group_message:
-#         group_message.channel_id = request.json.get('channel_id', group_message.channel_id)
-#         group_message.user_id = request.json.get('user_id', group_message.user_id)
-#         db.session.commit()
-#         return jsonify({'message': 'Group message updated successfully'})
-#     else:
-#         return jsonify({'message': 'Group message not found'}, 404)
+# Update GroupMessage endpoint
+@app.route('/group_messages/<int:group_message_id>', methods=['PATCH'])
+def update_group_message(group_message_id):
+    group_message = GroupMessage.query.get(group_message_id)
+    if group_message:
+        group_message.channel_id = request.json.get('channel_id', group_message.channel_id)
+        group_message.user_id = request.json.get('user_id', group_message.user_id)
+        db.session.commit()
+        return jsonify({'message': 'Group message updated successfully'})
+    else:
+        return jsonify({'message': 'Group message not found'}, 404)
 
-# # Delete GroupMessage endpoint
-# @app.route('/group_messages/<int:group_message_id>', methods=['DELETE'])
-# def delete_group_message(group_message_id):
-#     group_message = GroupMessage.query.get(group_message_id)
-#     if group_message:
-#         db.session.delete(group_message)
-#         db.session.commit()
-#         return jsonify({'message': 'Group message deleted successfully'})
-#     else:
-#         return jsonify({'message': 'Group message not found'}, 404)
+# Delete GroupMessage endpoint
+@app.route('/group_messages/<int:group_message_id>', methods=['DELETE'])
+def delete_group_message(group_message_id):
+    group_message = GroupMessage.query.get(group_message_id)
+    if group_message:
+        db.session.delete(group_message)
+        db.session.commit()
+        return jsonify({'message': 'Group message deleted successfully'})
+    else:
+        return jsonify({'message': 'Group message not found'}, 404)
 
 
 # # ReportedUser endpoint
