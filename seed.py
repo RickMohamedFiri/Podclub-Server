@@ -1,5 +1,5 @@
-# from app import app, db
-# from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from app import app, db
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
 
 # def seed_database():
 #     with app.app_context():
