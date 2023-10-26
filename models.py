@@ -54,16 +54,16 @@ class Channel(db.Model):
     messages = db.relationship('Message', backref='channel', lazy=True)
     group_messages = db.relationship('GroupMessage', backref='channel', lazy=True)
 
-# #messsage table 
-# class Message(db.Model):
-#     __tablename__ = 'messages'
-#     id = db.Column(db.Integer, primary_key=True)
-#     message = db.Column(db.Text, nullable=False)
-#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-#     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'))
-#     message_date = db.Column(db.DateTime, default=datetime.utcnow)
-#     parent_message_id = db.Column(db.Integer, db.ForeignKey('messages.id'))
-#     reported_messages = db.relationship('ReportedMessage', backref='message', foreign_keys='ReportedMessage.message_id', lazy=True)
+#messsage table 
+class Message(db.Model):
+    __tablename__ = 'messages'
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'))
+    message_date = db.Column(db.DateTime, default=datetime.utcnow)
+    parent_message_id = db.Column(db.Integer, db.ForeignKey('messages.id'))
+    reported_messages = db.relationship('ReportedMessage', backref='message', foreign_keys='ReportedMessage.message_id', lazy=True)
 
 # #groups_messages 
 # class GroupMessage(db.Model):
