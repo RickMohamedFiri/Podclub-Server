@@ -5,12 +5,14 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_jwt_extended import JWTManager,create_access_token
 from datetime import timedeltaz
+from flask_limiter import Limiter,get_remote_address
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
+limiter = Limiter(app, key_func=get_remote_address)
 
 # Initialize the JWT manager
 jwt = JWTManager(app)
@@ -27,7 +29,13 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
-# User Sign Up
+
+# Set rate limiting rules for specific routes
+@limiter.request_filter
+def exempt_users():
+    # Add logic to exempt certain users from rate limiting if needed
+    return False
+# User sign up
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -45,7 +53,6 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message": "User signed up successfully"}), 201
-
 # User Login
 @app.route('/login', methods=['POST'])
 def login():
@@ -60,8 +67,6 @@ def login():
 
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token), 200
-
-
 
 if __name__ == '__main':
     db.create_all()
