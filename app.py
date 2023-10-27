@@ -46,6 +46,22 @@ def signup():
     db.session.commit()
     return jsonify({"message": "User signed up successfully"}), 201
 
+# User Login
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    user = User.query.filter_by(username=username, password=password).first()
+
+    if not user:
+        return jsonify({"message": "Invalid username or password"}), 401
+
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token), 200
+
+
 
 if __name__ == '__main':
     db.create_all()
