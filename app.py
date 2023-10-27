@@ -6,6 +6,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager,create_access_token
 from datetime import timedeltaz
 from flask_limiter import Limiter,get_remote_address
+from wtforms import Form, StringField, PasswordField, validators
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -29,6 +30,10 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
+# Add validators
+class SignupForm(Form):
+    username = StringField('Username', [validators.Length(min=4, max=80), validators.DataRequired()])
+    password = PasswordField('Password', [validators.Length(min=6), validators.DataRequired()])
 
 # Set rate limiting rules for specific routes
 @limiter.request_filter
@@ -38,6 +43,10 @@ def exempt_users():
 # User sign up
 @app.route('/signup', methods=['POST'])
 def signup():
+    form = SignupForm(request.form)
+    if form.validate():
+        username = form.username.data
+        password = form.password.data
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
