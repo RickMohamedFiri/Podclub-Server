@@ -7,6 +7,7 @@ from flask_jwt_extended import JWTManager,create_access_token
 from datetime import timedeltaz
 from flask_limiter import Limiter,get_remote_address
 from wtforms import Form, StringField, PasswordField, validators
+from flask import abort
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -30,11 +31,6 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
 
-# Add validators
-class SignupForm(Form):
-    username = StringField('Username', [validators.Length(min=4, max=80), validators.DataRequired()])
-    password = PasswordField('Password', [validators.Length(min=6), validators.DataRequired()])
-
 # Set rate limiting rules for specific routes
 @limiter.request_filter
 def exempt_users():
@@ -42,11 +38,8 @@ def exempt_users():
     return False
 # User sign up
 @app.route('/signup', methods=['POST'])
+@limiter.limit("5 per minute")
 def signup():
-    form = SignupForm(request.form)
-    if form.validate():
-        username = form.username.data
-        password = form.password.data
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -62,8 +55,20 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
     return jsonify({"message": "User signed up successfully"}), 201
+# Signup validators
+
+class SignupForm(Form):
+    username = StringField('Username', [validators.Length(min=4, max=80), validators.DataRequired()])
+    password = PasswordField('Password', [validators.Length(min=6), validators.DataRequired()])
+
+
+form = SignupForm(request.form)
+if form.validate():
+        username = form.username.data
+        password = form.password.data
 # User Login
 @app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -72,11 +77,10 @@ def login():
     user = User.query.filter_by(username=username, password=password).first()
 
     if not user:
-        return jsonify({"message": "Invalid username or password"}), 401
-
-    access_token = create_access_token(identity=username)
-    return jsonify(access_token=access_token), 200
-
+        abort(401, description="Invalid username or password")
+    else:
+        access_token = create_access_token(identity=username)
+        return jsonify(access_token=access_token), 200
 if __name__ == '__main':
     db.create_all()
     app.run(debug=True)
