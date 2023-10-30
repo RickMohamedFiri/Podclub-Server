@@ -13,7 +13,7 @@ def message():
 # Create User endpoint
 @app.route('/users', methods=['POST'])
 def create_user():
-    new_user = User(first_name=request.json['first_name'],last_name=request.json['last_name'], email=request.json['email'], password=request.json['password'])
+    new_user = User(user_name=request.json['user_name'], email=request.json['email'], password=request.json['password'])
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'User created successfully'})
@@ -22,7 +22,7 @@ def create_user():
 @app.route('/users', methods=['GET'])
 def get_all_users():
     users = User.query.all()
-    user_list = [{'id': user.id, 'first_name': user.first_name,'last_name':user.last_name, 'email': user.email} for user in users]
+    user_list = [{'id': user.id, 'user_name': user.user_name, 'email': user.email} for user in users]
     return jsonify(user_list)
 
 # Update User endpoint
@@ -30,8 +30,7 @@ def get_all_users():
 def update_user(user_id):
     user = User.query.get(user_id)
     if user:
-        user.first_name = request.json.get('first_name', user.first_name)
-        user.last_name = request.json.get('last_name', user.last_name)
+        user.user_name = request.json.get('user_name', user.user_name)
         user.email = request.json.get('email', user.email)
         user.password = request.json.get('password', user.password)
         db.session.commit()
