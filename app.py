@@ -18,7 +18,6 @@ migrate = Migrate(app, db)
 api = Api(app)
 limiter = Limiter(app, key_func=get_remote_address)
 
-# Initialize the JWT manager
 jwt = JWTManager(app)
 
 # Configure JWT settings (Note: Store your secret key securely, not hardcoded here)
