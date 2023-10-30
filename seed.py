@@ -1,5 +1,6 @@
+# seed.py
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage
 
 def seed_database():
     with app.app_context():
@@ -54,15 +55,26 @@ def seed_database():
         db.session.add_all([reported_message1, reported_message2])
         db.session.commit()
 
-        # Create and add invitation records
-        invitation1 = Invitation(sender_user_id=user1.id, receiver_user_id=user2.id, channel_id=channel1.id)
-        invitation2 = Invitation(sender_user_id=user2.id, receiver_user_id=user1.id, channel_id=channel2.id)
 
-        # Add invitations to the session
-        db.session.add_all([invitation1, invitation2])
+        
+
+        # Create and add group channel records
+        group_channel1 = GroupChannel(user_id=user1.id, channel_name='Group Channel 1', description='Group Chat 1')
+        group_channel2 = GroupChannel(user_id=user2.id, channel_name='Group Channel 2', description='Group Chat 2')
+
+        # Add group channels to the session
+        db.session.add_all([group_channel1, group_channel2])
         db.session.commit()
-        
-        
+
+        # Create and add group message records
+        group_message3 = GroupChatMessage(channel_id=group_channel1.id, user_id=user1.id, content='Hello from Group Chat 1!')
+        group_message4 = GroupChatMessage(channel_id=group_channel2.id, user_id=user2.id, content='Hi from Group Chat 2!')
+
+        # Add group messages to the session
+        db.session.add_all([group_message3, group_message4])
+        db.session.commit()
+
+
         
 
 if __name__ == '__main__':

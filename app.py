@@ -1,4 +1,5 @@
-from flask import Flask
+# app.py
+from flask import Flask 
 from config import Config
 from models import db
 from flask_migrate import Migrate
@@ -10,6 +11,8 @@ from wtforms import Form, StringField, PasswordField, validators
 from flask import jsonify, request, abort
 from passlib.hash import sha256_crypt
 import os
+
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -27,6 +30,8 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration 
 
 # Import routes after JWT configuration
 from routes import *
+
+
 
 # User model
 class User(db.Model):
