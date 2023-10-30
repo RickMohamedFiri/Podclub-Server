@@ -5,40 +5,29 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_jwt_extended import JWTManager, create_access_token
 from datetime import timedelta
-from flask_limiter import Limiter, get_remote_address
 from wtforms import Form, StringField, PasswordField, validators
 from flask import jsonify, request, abort
 from passlib.hash import sha256_crypt
 import os
+from models import User
+import secrets
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
-limiter = Limiter(app, key_func=get_remote_address)
+
 
 # Initialize the JWT manager
 jwt = JWTManager(app)
 
-# Configure JWT settings (Note: Store your secret key securely, not hardcoded here)
-app.config['JWT_SECRET_KEY'] = 'your-secret-key'
+# Configure JWT settings 
+app.config['JWT_SECRET_KEY'] = 'secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
 
-# Import routes after JWT configuration
-from routes import *
-
-# User model
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-
-# Set rate limiting rules for specific routes
-@limiter.request_filter
-def exempt_users():
-    # Add logic to exempt certain users from rate limiting if needed
-    return False
+secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
+print(secret_key)
 
 # User sign up
 class SignupForm(Form):
@@ -46,7 +35,6 @@ class SignupForm(Form):
     password = PasswordField('Password', [validators.Length(min=6), validators.DataRequired()])
 
 @app.route('/signup', methods=['POST'])
-@limiter.limit("5 per minute")
 def signup():
     form = SignupForm(request.form)
     if form.validate():
@@ -68,7 +56,6 @@ def signup():
 
 # User Login
 @app.route('/login', methods=['POST'])
-@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -82,7 +69,7 @@ def login():
     else:
         return jsonify({"message": "Invalid username or password"}), 401
 
-# Protected route example
+# Protected route 
 from flask_jwt_extended import jwt_required
 
 @app.route('/protected', methods=['GET'])
