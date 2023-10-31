@@ -1,6 +1,6 @@
 # seed.py
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
 
 def seed_database():
     with app.app_context():
@@ -75,7 +75,13 @@ def seed_database():
         db.session.commit()
 
 
-        
+        # Create and add image message records
+        image_message1 = ImageMessage(channel_id=group_channel1.id, user_id=user1.id, image_url='image_url_1')
+        image_message2 = ImageMessage(channel_id=group_channel2.id, user_id=user2.id, image_url='image_url_2')
+
+        # Add image messages to the session
+        db.session.add_all([image_message1, image_message2])
+        db.session.commit()
 
 if __name__ == '__main__':
     seed_database()
