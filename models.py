@@ -114,3 +114,18 @@ class Invitation(db.Model):
     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
     invitation_date = db.Column(db.Date, nullable=False)
 
+#user reports table 
+class UserReport(db.Model):
+    __tablename__ = 'user_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    reporting_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_content_id = db.Column(db.Integer, nullable=False)
+    report_date = db.Column(db.DateTime, default=datetime.utcnow)
+    action_taken = db.Column(db.String(50))  # Store the action taken by moderators
+
+    def __init__(self, reporting_user_id, reported_user_id, reported_content_id, action_taken):
+        self.reporting_user_id = reporting_user_id
+        self.reported_user_id = reported_user_id
+        self.reported_content_id = reported_content_id
+        self.action_taken = action_taken

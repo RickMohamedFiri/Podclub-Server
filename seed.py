@@ -1,5 +1,5 @@
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation,UserReport
 import secrets
 import string
 from datetime import datetime  # Import the datetime module
@@ -69,6 +69,15 @@ def seed_database():
         # Add invitations to the session
         db.session.add_all([invitation1, invitation2])
         db.session.commit()
+
+         # Create and add UserReport records
+        user_report1 = UserReport(reporting_user_id=user1.id, reported_user_id=user2.id, reported_content_id=101, action_taken='No action taken')
+        user_report2 = UserReport(reporting_user_id=user2.id, reported_user_id=user1.id, reported_content_id=102, action_taken='Warning issued')
+
+        # Add UserReport instances to the session
+        db.session.add_all([user_report1, user_report2])
+        db.session.commit()
+
 
 if __name__ == '__main__':
     seed_database()
