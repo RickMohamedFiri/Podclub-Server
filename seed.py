@@ -66,7 +66,7 @@ def seed_database():
         invitation1 = Invitation(sender_user_id=user1.id, receiver_user_id=user2.id, channel_id=channel1.id,invitation_date=datetime.now())
         invitation2 = Invitation(sender_user_id=user2.id, receiver_user_id=user1.id, channel_id=channel2.id,invitation_date=datetime.now())
 
-        # Add invitations to the session
+        ## Add invitations to the session
         db.session.add_all([invitation1, invitation2])
         db.session.commit()
 
