@@ -197,3 +197,14 @@ class UserReport(db.Model):
         self.reported_user_id = reported_user_id
         self.reported_content_id = reported_content_id
         self.action_taken = action_taken
+        
+        
+        
+        #inivitations table 
+class Invitation(db.Model):
+    __tablename__ = 'invitations'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    invitation_date = db.Column(db.Date, nullable=False)
