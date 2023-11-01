@@ -1,21 +1,10 @@
 from flask import jsonify, request,abort
 from app import app, db
 from flask_cors import CORS
-<<<<<<< HEAD
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation,UserReport
-import secrets
-from datetime import timedelta
-from flask_jwt_extended import JWTManager, create_access_token,jwt_required, get_jwt_identity
-from marshmallow import ValidationError
-from validation import DataValidationSchema,SignupForm
-from passlib.hash import sha256_crypt
-=======
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
 import random
 import string
 from datetime import datetime
->>>>>>> 499b5b5f828905c04ae1ee98d13771baf9cb90ab
-
 
 CORS(app)
 
@@ -207,141 +196,6 @@ def delete_reported_user(reported_user_id):
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
 
-<<<<<<< HEAD
-# Report user endpoint
-@app.route('/report_user', methods=['POST'])
-@jwt_required
-def report_user():
-    data = request.get_json()
-    reporting_user_id = get_jwt_identity()
-    reported_user_id = data.get('reported_user_id')
-    reported_content_id = data.get('reported_content_id')
-
-    # Validate the incoming data
-    try:
-        # You should create a schema for data validation, for example, using Marshmallow
-        # Here's a simplified example:
-        data_schema = DataValidationSchema()
-        validated_data = data_schema.load(data)
-    except ValidationError as err:
-        return jsonify({"message": "Validation error", "error": err.messages}), 400
-
-    # Additional validation
-    if reporting_user_id == reported_user_id:
-        return jsonify({"message": "You cannot report yourself"}), 400
-
-    # Check if the reported user and content exist in your database
-    reported_user = User.query.get(reported_user_id)
-    if not reported_user:
-        return jsonify({"message": "Reported user does not exist"}), 404
-
-    # Check if the reported content exists
-    reported_content = ReportedMessage.query.get(reported_content_id)
-    if not reported_content:
-        return jsonify({"message": "Reported content does not exist"}), 404
-
-    return jsonify({"message": "Abuse reported successfully"}), 201
-
-#Admin actions endpoint 
-@app.route('/admin/reports', methods=['GET'])
-@jwt_required
-def list_reports():
-    current_user_id = get_jwt_identity()
-    current_user = User.query.get(current_user_id)
-    
-    if not current_user or not current_user.is_moderator:
-        return jsonify({"message": "You do not have permission to access this endpoint."}), 403
-
-    reports = Report.query.all()
-    
-    # Create a list of reports with their details and state
-    report_list = [{"id": report.id, "user_id": report.user_id, "description": report.description, "state": report.state} for report in reports]
-    
-    return jsonify({"reports": report_list})
-
-@app.route('/admin/reports/action', methods=['POST'])
-@jwt_required
-def report_action():
-    current_user_id = get_jwt_identity()
-    current_user = User.query.get(current_user_id)
-    
-    if not current_user or not current_user.is_moderator:
-        return jsonify({"message": "You do not have permission to access this endpoint."}), 403
-
-    data = request.get_json()
-    report_id = data.get('report_id')
-    action = data.get('action')
-    
-    report = Report.query.get(report_id)
-    
-    if not report:
-        return jsonify({"message": "Report not found"}), 404
-    
-    if action == "resolve":
-        report.state = "resolved"
-    elif action == "reject":
-        report.state = "rejected"
-    elif action == "review":
-        report.state = "under review"
-    else:
-        return jsonify({"message": "Invalid action"}), 400
-    
-    db.session.commit()
-    
-    return jsonify({"message": f"Report {report_id} has been {action}ed"})
-
-
-
-# User signup endpoint 
-@app.route('/signup', methods=['POST'])
-def signup():
-    form = SignupForm(request.form)
-    if form.validate():
-        username = form.username.data
-        password = form.password.data
-        
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            return jsonify({"message": "Username already exists"}), 400
-        
-        # Hash the password before storing it
-        hashed_password = sha256_crypt.hash(password)
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({"message": "User signed up successfully"}), 201
-    else:
-        return jsonify({"message": "Validation error", "errors": form.errors}), 400
-
-# User Login
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    user = User.query.filter_by(username=username).first()
-
-    if user and sha256_crypt.verify(password, user.password):
-        access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token), 200
-    else:
-        return jsonify({"message": "Invalid username or password"}), 401
-    
-# Protected route 
-from flask_jwt_extended import jwt_required
-
-@app.route('/protected', methods=['GET'])
-@jwt_required
-def protected_route():
-    # Only authenticated users can access this route
-    return jsonify({"message": "You have access to this protected route"})
-=======
-
-
-
-
-
 # Create the group channel endpoint
 @app.route('/group_channels', methods=['POST'])
 def create_group_channel():
@@ -512,5 +366,4 @@ def create_image_message():
 
 
 
->>>>>>> 499b5b5f828905c04ae1ee98d13771baf9cb90ab
 
