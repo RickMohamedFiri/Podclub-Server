@@ -1,7 +1,11 @@
 from flask import jsonify, request
 from app import app, db
 from flask_cors import CORS
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
+import random
+import string
+from datetime import datetime
+
 
 CORS(app)
 
@@ -184,4 +188,180 @@ def delete_reported_user(reported_user_id):
         return jsonify({'message': 'Reported user deleted successfully'})
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
+
+
+
+
+
+
+# Create the group channel endpoint
+@app.route('/group_channels', methods=['POST'])
+def create_group_channel():
+    # Extract user input from the request
+    user_id = request.json.get('user_id')
+    channel_name = request.json.get('channel_name')
+    description = request.json.get('description')
+
+    # Create the group channel in the database
+    new_channel = GroupChannel(user_id=user_id, channel_name=channel_name, description=description)
+    db.session.add(new_channel)
+    db.session.commit()
+
+    return jsonify({'message': 'Group channel created successfully'})
+# @app.route('/group_channels', methods=['POST'])
+# def create_group_channel():
+#     user_id = request.json.get('user_id')
+#     # Check if the user has reached the maximum limit of group channels (e.g., 5).
+#     user = User.query.get(user_id)
+#     if user and user.group_channels_count < 5:
+#         # The user can create a new group channel. Increment the group_channels_count.
+#         user.group_channels_count += 1
+#         new_channel = GroupChannel(user_id=user_id, channel_name=request.json['channel_name'], description=request.json['description'])
+#         db.session.add(new_channel)
+#         db.session.commit()
+#         return jsonify({'message': 'Group channel created successfully'})
+#     else:
+#         return jsonify({'message': 'Maximum limit of group channels reached for this user'}, 403)
+
+# Update Group Channel Description endpoin
+@app.route('/group_channels/<int:channel_id>', methods=['PATCH'])
+def update_group_channel_description(channel_id):
+    # Find the group channel by its ID
+    channel = GroupChannel.query.get(channel_id)
+    if channel:
+        # Update the channel description
+        new_description = request.json.get('new_description')
+        channel.description = new_description
+        db.session.commit()
+        return jsonify({'message': 'Group channel description updated successfully'})
+    else:
+        return jsonify({'message': 'Group channel not found'}, 404)
+
+
+
+# Create the group chat message endpoint
+@app.route('/group_chat_messages', methods=['POST'])
+def add_message_to_group_chat():
+    # Extract message content and user ID from the request
+    user_id = request.json.get('user_id')
+    message_content = request.json.get('message_content')
+    channel_id = request.json.get('channel_id')  # Add channel ID to the request
+
+    # Create and store the message in the database
+    new_message = GroupChatMessage(channel_id=channel_id, user_id=user_id, content=message_content)
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({'message': 'Message added to the group chat'})
+
+# Reply to Message in group chat enpoint
+@app.route('/group_chat_messages/<int:message_id>/reply', methods=['POST'])
+def reply_to_message(message_id):
+    # Extract user ID and reply content from the request
+    user_id = request.json.get('user_id')
+    reply_content = request.json.get('reply_content')
+    channel_id = request.json.get('channel_id')  # Add channel ID to the request
+
+    # Create and store the reply in the database
+    new_reply = GroupChatMessage(channel_id=channel_id, user_id=user_id, content=reply_content, parent_message_id=message_id)
+    db.session.add(new_reply)
+    db.session.commit()
+
+    return jsonify({'message': 'Reply added to the message'})
+
+# Update group chat message endpoint
+@app.route('/group_chat_messages/<int:message_id>', methods=['PATCH'])
+def update_group_chat_message(message_id):
+    # Extract user ID and updated message content from the request
+    user_id = request.json.get('user_id')
+    updated_message_content = request.json.get('updated_message_content')
+
+    # Find the message to update
+    message = GroupChatMessage.query.filter_by(id=message_id, user_id=user_id).first()
+
+    if message:
+        message.content = updated_message_content
+        db.session.commit()
+        return jsonify({'message': 'Message updated successfully'})
+    else:
+        return jsonify({'message': 'Message not found or unauthorized to update'}, 404)
+
+# Delete group chat message endpoint
+@app.route('/group_chat_messages/<int:message_id>', methods=['DELETE'])
+def delete_group_chat_message(message_id):
+    # Extract user ID from the request
+    user_id = request.json.get('user_id')
+
+    # Find the message to delete
+    message = GroupChatMessage.query.filter_by(id=message_id, user_id=user_id).first()
+
+    if message:
+        db.session.delete(message)
+        db.session.commit()
+        return jsonify({'message': 'Message deleted successfully'})
+    else:
+        return jsonify({'message': 'Message not found or unauthorized to delete'}, 404)
+
+
+
+# # Create an Image Message endpoint
+# @app.route('/image_messages', methods=['POST'])
+# def create_image_message():
+#     # Extract data from the request
+#     data = request.get_json()
+#     print(data)
+#     data = request.get_json()
+#     channel_id = data.get('channel_id')
+#     user_id = data.get('user_id')
+#     image_url = data.get('image_url')
+#     message_date = data.get('message_date')
+
+#     # Create an ImageMessage object
+#     new_image_message = ImageMessage(
+#         channel_id=channel_id,
+#         user_id=user_id,
+#         image_url=image_url,
+#         message_date=message_date
+#     )
+
+#     # # Add the image message to the database
+#     db.session.add(new_image_message)
+#     db.session.commit()
+#     print(f"Channel ID: {channel_id}, User ID: {user_id}, Image URL: {image_url}, Message Date: {message_date}")
+
+#     return jsonify({'message': 'Image message created successfully'})
+
+from datetime import datetime
+
+@app.route('/image_messages', methods=['POST'])
+def create_image_message():
+    # Extract data from the request
+    data = request.get_json()
+    channel_id = data.get('channel_id')
+    user_id = data.get('user_id')
+    image_url = data.get('image_url')
+    message_date_str = data.get('message_date')  # Get the date string
+
+    # Convert the date string to a datetime object
+    message_date = datetime.strptime(message_date_str, '%Y-%m-%d %H:%M:%S.%f')
+
+    # Create an ImageMessage object
+    new_image_message = ImageMessage(
+        channel_id=channel_id,
+        user_id=user_id,
+        image_url=image_url,
+        message_date=message_date  # Use the datetime object
+    )
+
+    # Add the image message to the database
+    db.session.add(new_image_message)
+    db.session.commit()
+
+    # Return a JSON response
+    return jsonify({'message': 'Image message created successfully'})
+
+
+
+
+
 
