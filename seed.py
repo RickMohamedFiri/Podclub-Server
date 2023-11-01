@@ -1,6 +1,7 @@
 # seed.py
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin
+from datetime import datetime
 
 def seed_database():
     with app.app_context():
@@ -60,16 +61,31 @@ def seed_database():
         db.session.add_all([reported_message1, reported_message2])
         db.session.commit()
 
-        # Create and add invitation records
-        invitation1 = Invitation(sender_user_id=user1.id, receiver_user_id=user2.id, channel_id=channel1.id)
-        invitation2 = Invitation(sender_user_id=user2.id, receiver_user_id=user1.id, channel_id=channel2.id)
+        # Create and add invitation records with current date
+        invitation1 = Invitation(
+            sender_user_id=user1.id,
+            receiver_user_id=user2.id,
+            channel_id=channel1.id,
+            invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
+        )
+        invitation2 = Invitation(
+            sender_user_id=user2.id,
+            receiver_user_id=user1.id,
+            channel_id=channel2.id,
+            invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
+        )
 
         ## Add invitations to the session
         db.session.add_all([invitation1, invitation2])
         db.session.commit()
-        
-        
-        
+
+        # Create and add admin records
+        admin1 = Admin(user_id=user1.id, can_ban_users=True, can_delete_channels=True)
+        admin2 = Admin(user_id=user2.id, can_ban_users=True, can_delete_channels=False)
+
+        # Add admins to the session
+        db.session.add_all([admin1, admin2])
+        db.session.commit()
 
 if __name__ == '__main__':
     seed_database()

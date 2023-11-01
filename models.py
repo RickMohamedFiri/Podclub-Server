@@ -126,6 +126,13 @@ class ReportedMessage(db.Model):
 
 
 
+# Define the Admin model with permissions
+class Admin(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    can_ban_users = db.Column(db.Boolean, default=False)
+    can_delete_channels = db.Column(db.Boolean, default=False)
 
 
 

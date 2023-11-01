@@ -1,6 +1,7 @@
 from flask import jsonify, request,abort
 from app import app, db
 from flask_cors import CORS
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
 import random
 import string
@@ -10,6 +11,24 @@ CORS(app)
 
 @app.route('/')
 def message():
+    return 'Welcome to the channels API'
+
+# Create User endpoint
+
+@app.route('/users', methods=['POST', 'PUT'])
+def create_or_update_user():
+    if request.method == 'POST':
+        new_user = User(
+            user_name=request.json.get('user_name'),
+            email=request.json.get('email'),
+            password=request.json.get('password')
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'User created successfully'})
+    elif request.method == 'PUT':
+        # Handle PUT request logic 
+        return jsonify({'message': 'User data updated successfully'})
     return 'welcome to the channels api'
 
 # Initialize the JWT manager
@@ -185,7 +204,7 @@ def update_reported_user(reported_user_id):
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
 
-# Delete ReportedUser endpoint
+# Delete ReportedUser endpoint              
 @app.route('/reported_users/<int:reported_user_id>', methods=['DELETE'])
 def delete_reported_user(reported_user_id):
     reported_user = ReportedUser.query.get(reported_user_id)
@@ -196,6 +215,62 @@ def delete_reported_user(reported_user_id):
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
 
+
+
+
+# Get all ReportedUsers endpoint (only accessible to admins)
+@app.route('/admin/reported_users', methods=['GET'])
+def get_all_reported_users_admin():
+    # Check if the current user is an admin with permission to view reported users
+    current_user = User.query.get(1) 
+    if not current_user or not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_users = ReportedUser.query.all()
+    reported_user_list = []
+
+    for reported_user in reported_users:
+        user = User.query.get(reported_user.user_id)
+        reported_user_list.append({
+            'id': reported_user.id,
+            'user_id': reported_user.user_id,
+            'username': user.user_name,
+            'is_banned': reported_user.is_banned
+        })
+
+    return jsonify({'reported_users': reported_user_list})
+
+# Ban Reported User endpoint (only accessible to admins)
+@app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
+def ban_user(user_id):
+    # Check if the current user is an admin with permission to ban users
+    current_user = User.query.get(1)  
+    if not current_user or not current_user.is_admin or not current_user.admin_permissions.can_ban_users:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_user = ReportedUser.query.filter_by(user_id=user_id).first()
+    if reported_user:
+        reported_user.is_banned = True
+        db.session.commit()
+        return jsonify({'message': 'User banned successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
+
+# Unban Reported User endpoint (only accessible to admins)
+@app.route('/admin/unban_user/<int:user_id>', methods=['POST'])
+def unban_user(user_id):
+    # Check if the current user is an admin with permission to unban users
+    current_user = User.query.get(1)  
+    if not current_user or not current_user.is_admin or not current_user.admin_permissions.can_ban_users:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_user = ReportedUser.query.filter_by(user_id=user_id).first()
+    if reported_user:
+        reported_user.is_banned = False
+        db.session.commit()
+        return jsonify({'message': 'User unbanned successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
 # Create the group channel endpoint
 @app.route('/group_channels', methods=['POST'])
 def create_group_channel():
