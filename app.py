@@ -1,4 +1,5 @@
 # app.py
+import os
 import secrets
 from flask import Flask 
 from config import Config
@@ -17,6 +18,7 @@ api = Api(app)
 jwt = JWTManager(app)
 
 # Configure JWT settings 
+app.config['SQLALCHEMY_DATABASE_URL'] = os.environ.get('DATABASE_URL')
 app.config['JWT_SECRET_KEY'] = 'secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
 
@@ -27,3 +29,8 @@ print(secret_key)
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
+
+
+
+
+# ://chatbox_song_api_user:jlcfyB2s3P4xdaFVcZllCDqiKPPbjHuE@dpg-cl167qqs1bgc73f7i4a0-a.oregon-postgres.render.com/chatbox_song_api
