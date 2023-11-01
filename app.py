@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
+import secrets
 
 app = Flask(__name__)
 app.config.from_object(Config)

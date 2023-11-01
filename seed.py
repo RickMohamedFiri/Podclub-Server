@@ -1,6 +1,8 @@
-# seed.py
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, UserReport
+import secrets
+import string
+from datetime import datetime
 
 def seed_database():
     with app.app_context():
@@ -61,15 +63,20 @@ def seed_database():
         db.session.commit()
 
         # Create and add invitation records
-        invitation1 = Invitation(sender_user_id=user1.id, receiver_user_id=user2.id, channel_id=channel1.id)
-        invitation2 = Invitation(sender_user_id=user2.id, receiver_user_id=user1.id, channel_id=channel2.id)
+        invitation1 = Invitation(sender_user_id=user1.id, receiver_user_id=user2.id, channel_id=channel1.id,invitation_date=datetime.now())
+        invitation2 = Invitation(sender_user_id=user2.id, receiver_user_id=user1.id, channel_id=channel2.id,invitation_date=datetime.now())
 
-        ## Add invitations to the session
+        # Add invitations to the session
         db.session.add_all([invitation1, invitation2])
         db.session.commit()
-        
-        
-        
+
+        # Create and add UserReport records
+        user_report1 = UserReport(reporting_user_id=user1.id, reported_user_id=user2.id, reported_content_id=101, action_taken='No action taken')
+        user_report2 = UserReport(reporting_user_id=user2.id, reported_user_id=user1.id, reported_content_id=102, action_taken='Warning issued')
+
+        # Add UserReport instances to the session
+        db.session.add_all([user_report1, user_report2])
+        db.session.commit()
 
 if __name__ == '__main__':
     seed_database()
