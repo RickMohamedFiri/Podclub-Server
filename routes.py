@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request,abort
 from app import app, db
 from flask_cors import CORS
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
@@ -6,18 +6,26 @@ import random
 import string
 from datetime import datetime
 
-
 CORS(app)
 
 @app.route('/')
 def message():
     return 'welcome to the channels api'
 
+# Initialize the JWT manager
+jwt = JWTManager(app)
+
+# Configure JWT settings 
+app.config['JWT_SECRET_KEY'] = 'secret_key'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
+
+secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
+print(secret_key)
 
 # Create User endpoint
 @app.route('/users', methods=['POST'])
 def create_user():
-    new_user = User(first_name=request.json['first_name'],last_name=request.json['last_name'], email=request.json['email'], password=request.json['password'])
+    new_user = User(user_name=request.json['user_name'], email=request.json['email'], password=request.json['password'])
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'User created successfully'})
@@ -26,7 +34,7 @@ def create_user():
 @app.route('/users', methods=['GET'])
 def get_all_users():
     users = User.query.all()
-    user_list = [{'id': user.id, 'first_name': user.first_name,'last_name':user.last_name, 'email': user.email} for user in users]
+    user_list = [{'id': user.id, 'user_name': user.user_name, 'email': user.email} for user in users]
     return jsonify(user_list)
 
 # Update User endpoint
@@ -34,8 +42,7 @@ def get_all_users():
 def update_user(user_id):
     user = User.query.get(user_id)
     if user:
-        user.first_name = request.json.get('first_name', user.first_name)
-        user.last_name = request.json.get('last_name', user.last_name)
+        user.user_name = request.json.get('user_name', user.user_name)
         user.email = request.json.get('email', user.email)
         user.password = request.json.get('password', user.password)
         db.session.commit()
@@ -188,11 +195,6 @@ def delete_reported_user(reported_user_id):
         return jsonify({'message': 'Reported user deleted successfully'})
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
-
-
-
-
-
 
 # Create the group channel endpoint
 @app.route('/group_channels', methods=['POST'])

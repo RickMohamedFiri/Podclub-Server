@@ -14,12 +14,22 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
+    user_name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     verification_token = db.Column(db.String(64), unique=True)
+    role = db.Column(db.String(20))
+
+    def __init__(self,user_name, email, password, verification_token, role):
+        self.user_name = user_name
+        self.email = email
+        self.password = password 
+        self.verification_token = verification_token
+        self.role = role
+
+    def __repr__(self):
+        return f"<User(id={self.id}, email={self.email}, role={self.role})>"
 
     # relationships with other tables
     channels = db.relationship('Channel', backref='user', lazy=True)
@@ -165,3 +175,18 @@ class ImageMessage(db.Model):
 # Add a relationship between GroupChannel and ImageMessage
 GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
 
+#user reports table 
+class UserReport(db.Model):
+    __tablename__ = 'user_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    reporting_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_content_id = db.Column(db.Integer, nullable=False)
+    report_date = db.Column(db.DateTime, default=datetime.utcnow)
+    action_taken = db.Column(db.String(50))  # Store the action taken by moderators
+
+    def __init__(self, reporting_user_id, reported_user_id, reported_content_id, action_taken):
+        self.reporting_user_id = reporting_user_id
+        self.reported_user_id = reported_user_id
+        self.reported_content_id = reported_content_id
+        self.action_taken = action_taken
