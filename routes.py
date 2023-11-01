@@ -1,11 +1,13 @@
+import secrets
 from flask import jsonify, request,abort
+from flask_jwt_extended import JWTManager
 from app import app, db
 from flask_cors import CORS
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timedelta
 
 CORS(app)
 

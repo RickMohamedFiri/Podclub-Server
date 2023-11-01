@@ -1,4 +1,6 @@
 # seed.py
+import secrets
+import string
 from app import app, db
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin
 from datetime import datetime
