@@ -1,4 +1,5 @@
-from flask import Flask
+# app.py
+from flask import Flask 
 from config import Config
 from models import db
 from flask_migrate import Migrate
@@ -12,15 +13,16 @@ db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
 
-# Initialize the JWT manager
 jwt = JWTManager(app)
 
-# Configure JWT settings
-app.config['JWT_SECRET_KEY'] = 'your-secret-key'  
+# Configure JWT settings 
+app.config['JWT_SECRET_KEY'] = 'secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
 
-# Import routes after JWT configuration
-from routes import *
+secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
+print(secret_key)
 
-if __name__ == '__main':
+
+if __name__ == '__main__':
+    db.create_all()
     app.run(debug=True)

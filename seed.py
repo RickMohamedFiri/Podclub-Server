@@ -1,3 +1,4 @@
+# seed.py
 from app import app, db
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin
 from datetime import datetime
@@ -7,9 +8,14 @@ def seed_database():
         # Create the database tables
         db.create_all()
 
+        # Function to generate a secure verification token
+        def generate_verification_token(token_length=10):
+            alphabet = string.ascii_letters + string.digits  # Use letters and numbers
+            return ''.join(secrets.choice(alphabet) for _ in range(token_length))
+
         # Create and add user records
-        user1 = User(user_name='Aleki', email='alexi@gmail.com', password='wordpass')
-        user2 = User(user_name='Jamex',  email='jamex@gmail.com', password='jamojam')
+        user1 = User(user_name='Aleki', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
+        user2 = User(user_name='Jamex', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
 
         # Add users to the session
         db.session.add_all([user1, user2])
@@ -39,41 +45,17 @@ def seed_database():
         db.session.add_all([group_message1, group_message2])
         db.session.commit()
 
-        # Create and add reported user records with default values
-        reported_user1 = ReportedUser(
-            reporting_user_id=user1.id,
-            reported_user_id=user2.id,
-            message_id=message1.id,
-            report_date=datetime.utcnow(),  # Provide a default value for report_date
-            is_banned=False  # Provide a default value for is_banned
-        )
-        reported_user2 = ReportedUser(
-            reporting_user_id=user2.id,
-            reported_user_id=user1.id,
-            message_id=message2.id,
-            report_date=datetime.utcnow(),  # Provide a default value for report_date
-            is_banned=False  # Provide a default value for is_banned
-        )
+        # Create and add reported user records
+        reported_user1 = ReportedUser(reporting_user_id=user1.id, reported_user_id=user2.id, message_id=message1.id, report_date=datetime.now(), is_banned=True)
+        reported_user2 = ReportedUser(reporting_user_id=user2.id, reported_user_id=user1.id, message_id=message2.id, report_date=datetime.now(), is_banned=True)
 
         # Add reported users to the session
         db.session.add_all([reported_user1, reported_user2])
         db.session.commit()
 
-        # Create and add reported message records with default values
-        reported_message1 = ReportedMessage(
-            reporting_user_id=user1.id,
-            user_id=user2.id,
-            message_id=message1.id,
-            report_date=datetime.utcnow(),  # Provide a default value for report_date
-            is_banned=False  # Provide a default value for is_banned
-        )
-        reported_message2 = ReportedMessage(
-            reporting_user_id=user2.id,
-            user_id=user1.id,
-            message_id=message2.id,
-            report_date=datetime.utcnow(),  # Provide a default value for report_date
-            is_banned=False  # Provide a default value for is_banned
-        )
+        # Create and add reported message records
+        reported_message1 = ReportedMessage(reporting_user_id=user1.id, user_id=user2.id, message_id=message1.id, report_date=datetime.now(),is_banned= True)  # Provide a valid report_date
+        reported_message2 = ReportedMessage(reporting_user_id=user2.id, user_id=user1.id, message_id=message2.id, report_date=datetime.now(),is_banned=True)  # Provide a valid report_date
 
         # Add reported messages to the session
         db.session.add_all([reported_message1, reported_message2])
@@ -93,7 +75,7 @@ def seed_database():
             invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
         )
 
-        # Add invitations to the session
+        ## Add invitations to the session
         db.session.add_all([invitation1, invitation2])
         db.session.commit()
 
