@@ -30,7 +30,3 @@ if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
 
-
-
-
-# ://chatbox_song_api_user:jlcfyB2s3P4xdaFVcZllCDqiKPPbjHuE@dpg-cl167qqs1bgc73f7i4a0-a.oregon-postgres.render.com/chatbox_song_api
