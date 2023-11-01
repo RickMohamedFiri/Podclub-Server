@@ -23,7 +23,6 @@ api = Api(app)
 =======
 >>>>>>> 499b5b5f828905c04ae1ee98d13771baf9cb90ab
 
-# Initialize the JWT manager
 jwt = JWTManager(app)
 
 # Configure JWT settings 
