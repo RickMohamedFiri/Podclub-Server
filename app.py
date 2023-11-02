@@ -46,13 +46,14 @@ mail = Mail(app)
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = "yusramoham99@gmail.com"
-app.config['MAIL_PASSWORD'] = 'podclub'
+app.config['MAIL_PASSWORD'] = 'rsoq uhor wqex hwan'
 app.config['MAIL_USE_TLS'] = True
 
 
 
 secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
 print(secret_key)
+from routes import *
 
 
 if __name__ == '__main__':
