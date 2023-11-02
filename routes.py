@@ -1,4 +1,6 @@
-from flask import jsonify, request
+import secrets
+from flask import jsonify, request,abort
+from flask_jwt_extended import JWTManager
 from app import app, db, mail 
 from flask_cors import CORS
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation
@@ -24,13 +26,40 @@ CORS(app)
 
 @app.route('/')
 def message():
+    return 'Welcome to the channels API'
+
+# Create User endpoint
+
+@app.route('/users', methods=['POST', 'PUT'])
+def create_or_update_user():
+    if request.method == 'POST':
+        new_user = User(
+            user_name=request.json.get('user_name'),
+            email=request.json.get('email'),
+            password=request.json.get('password')
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'User created successfully'})
+    elif request.method == 'PUT':
+        # Handle PUT request logic 
+        return jsonify({'message': 'User data updated successfully'})
     return 'welcome to the channels api'
 
+# Initialize the JWT manager
+jwt = JWTManager(app)
+
+# Configure JWT settings 
+app.config['JWT_SECRET_KEY'] = 'secret_key'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
+
+secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
+print(secret_key)
 
 # Create User endpoint
 @app.route('/users', methods=['POST'])
 def create_user():
-    new_user = User(first_name=request.json['first_name'],last_name=request.json['last_name'], email=request.json['email'], password=request.json['password'])
+    new_user = User(user_name=request.json['user_name'], email=request.json['email'], password=request.json['password'])
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'User created successfully'})
@@ -39,7 +68,7 @@ def create_user():
 @app.route('/users', methods=['GET'])
 def get_all_users():
     users = User.query.all()
-    user_list = [{'id': user.id, 'first_name': user.first_name,'last_name':user.last_name, 'email': user.email} for user in users]
+    user_list = [{'id': user.id, 'user_name': user.user_name, 'email': user.email} for user in users]
     return jsonify(user_list)
 
 # Update User endpoint
@@ -47,8 +76,7 @@ def get_all_users():
 def update_user(user_id):
     user = User.query.get(user_id)
     if user:
-        user.first_name = request.json.get('first_name', user.first_name)
-        user.last_name = request.json.get('last_name', user.last_name)
+        user.user_name = request.json.get('user_name', user.user_name)
         user.email = request.json.get('email', user.email)
         user.password = request.json.get('password', user.password)
         db.session.commit()
@@ -191,7 +219,7 @@ def update_reported_user(reported_user_id):
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
 
-# Delete ReportedUser endpoint
+# Delete ReportedUser endpoint              
 @app.route('/reported_users/<int:reported_user_id>', methods=['DELETE'])
 def delete_reported_user(reported_user_id):
     reported_user = ReportedUser.query.get(reported_user_id)
@@ -205,8 +233,59 @@ def delete_reported_user(reported_user_id):
 
 
 
+# Get all ReportedUsers endpoint (only accessible to admins)
+@app.route('/admin/reported_users', methods=['GET'])
+def get_all_reported_users_admin():
+    # Check if the current user is an admin with permission to view reported users
+    current_user = User.query.get(1) 
+    if not current_user or not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 401
 
+    reported_users = ReportedUser.query.all()
+    reported_user_list = []
 
+    for reported_user in reported_users:
+        user = User.query.get(reported_user.user_id)
+        reported_user_list.append({
+            'id': reported_user.id,
+            'user_id': reported_user.user_id,
+            'username': user.user_name,
+            'is_banned': reported_user.is_banned
+        })
+
+    return jsonify({'reported_users': reported_user_list})
+
+# Ban Reported User endpoint (only accessible to admins)
+@app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
+def ban_user(user_id):
+    # Check if the current user is an admin with permission to ban users
+    current_user = User.query.get(1)  
+    if not current_user or not current_user.is_admin or not current_user.admin_permissions.can_ban_users:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_user = ReportedUser.query.filter_by(user_id=user_id).first()
+    if reported_user:
+        reported_user.is_banned = True
+        db.session.commit()
+        return jsonify({'message': 'User banned successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
+
+# Unban Reported User endpoint (only accessible to admins)
+@app.route('/admin/unban_user/<int:user_id>', methods=['POST'])
+def unban_user(user_id):
+    # Check if the current user is an admin with permission to unban users
+    current_user = User.query.get(1)  
+    if not current_user or not current_user.is_admin or not current_user.admin_permissions.can_ban_users:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_user = ReportedUser.query.filter_by(user_id=user_id).first()
+    if reported_user:
+        reported_user.is_banned = False
+        db.session.commit()
+        return jsonify({'message': 'User unbanned successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
 # Create the group channel endpoint
 @app.route('/group_channels', methods=['POST'])
 def create_group_channel():

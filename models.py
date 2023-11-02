@@ -34,8 +34,7 @@ def generate_unique_token():
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(100))
-    last_name = db.Column(db.String(100))
+    user_name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -161,6 +160,13 @@ class ReportedMessage(db.Model):
 
 
 
+# Define the Admin model with permissions
+class Admin(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    can_ban_users = db.Column(db.Boolean, default=False)
+    can_delete_channels = db.Column(db.Boolean, default=False)
 
 
 
@@ -218,3 +224,29 @@ class Invitation(db.Model):
     group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
     token = db.Column(db.String(32), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+#user reports table 
+class UserReport(db.Model):
+    __tablename__ = 'user_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    reporting_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reported_content_id = db.Column(db.Integer, nullable=False)
+    report_date = db.Column(db.DateTime, default=datetime.utcnow)
+    action_taken = db.Column(db.String(50))  # Store the action taken by moderators
+
+    def __init__(self, reporting_user_id, reported_user_id, reported_content_id, action_taken):
+        self.reporting_user_id = reporting_user_id
+        self.reported_user_id = reported_user_id
+        self.reported_content_id = reported_content_id
+        self.action_taken = action_taken
+        
+        
+        
+        #inivitations table 
+class Invitation(db.Model):
+    __tablename__ = 'invitations'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    invitation_date = db.Column(db.Date, nullable=False)

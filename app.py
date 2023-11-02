@@ -1,4 +1,6 @@
 # app.py
+import os
+import secrets
 from flask import Flask 
 from config import Config
 from models import db
@@ -33,7 +35,6 @@ db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
 
-# Initialize the JWT manager
 jwt = JWTManager(app)
 
 
@@ -49,11 +50,11 @@ app.config['MAIL_USE_TLS'] = True
 
 
 
-# Import routes after JWT configuration
-from routes import *
-
+secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
+print(secret_key)
 
 
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
+
