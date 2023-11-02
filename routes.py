@@ -287,20 +287,6 @@ def create_group_channel():
     db.session.commit()
 
     return jsonify({'message': 'Group channel created successfully'})
-# @app.route('/group_channels', methods=['POST'])
-# def create_group_channel():
-#     user_id = request.json.get('user_id')
-#     # Check if the user has reached the maximum limit of group channels (e.g., 5).
-#     user = User.query.get(user_id)
-#     if user and user.group_channels_count < 5:
-#         # The user can create a new group channel. Increment the group_channels_count.
-#         user.group_channels_count += 1
-#         new_channel = GroupChannel(user_id=user_id, channel_name=request.json['channel_name'], description=request.json['description'])
-#         db.session.add(new_channel)
-#         db.session.commit()
-#         return jsonify({'message': 'Group channel created successfully'})
-#     else:
-#         return jsonify({'message': 'Maximum limit of group channels reached for this user'}, 403)
 
 # Update Group Channel Description endpoin
 @app.route('/group_channels/<int:channel_id>', methods=['PATCH'])
@@ -380,36 +366,7 @@ def delete_group_chat_message(message_id):
         return jsonify({'message': 'Message deleted successfully'})
     else:
         return jsonify({'message': 'Message not found or unauthorized to delete'}, 404)
-
-
-
-# # Create an Image Message endpoint
-# @app.route('/image_messages', methods=['POST'])
-# def create_image_message():
-#     # Extract data from the request
-#     data = request.get_json()
-#     print(data)
-#     data = request.get_json()
-#     channel_id = data.get('channel_id')
-#     user_id = data.get('user_id')
-#     image_url = data.get('image_url')
-#     message_date = data.get('message_date')
-
-#     # Create an ImageMessage object
-#     new_image_message = ImageMessage(
-#         channel_id=channel_id,
-#         user_id=user_id,
-#         image_url=image_url,
-#         message_date=message_date
-#     )
-
-#     # # Add the image message to the database
-#     db.session.add(new_image_message)
-#     db.session.commit()
-#     print(f"Channel ID: {channel_id}, User ID: {user_id}, Image URL: {image_url}, Message Date: {message_date}")
-
-#     return jsonify({'message': 'Image message created successfully'})
-
+    
 from datetime import datetime
 
 @app.route('/image_messages', methods=['POST'])

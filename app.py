@@ -28,6 +28,9 @@ secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
 print(secret_key)
 
 
+from routes import *
+
+
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
