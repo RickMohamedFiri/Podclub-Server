@@ -1,10 +1,22 @@
 from flask import jsonify, request
-from app import app, db
+from app import app, db, mail 
 from flask_cors import CORS
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage
-import random
-import string
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation
 from datetime import datetime
+from flask_mail import Message, Mail
+from flask_jwt_extended import create_access_token, jwt_required
+from flask_login import login_user, login_required
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
+# from email_module import send_invitation_email
+
+
+
+
+
+
+mail = Mail(app)
 
 
 CORS(app)
@@ -302,37 +314,7 @@ def delete_group_chat_message(message_id):
     else:
         return jsonify({'message': 'Message not found or unauthorized to delete'}, 404)
 
-
-
-# # Create an Image Message endpoint
-# @app.route('/image_messages', methods=['POST'])
-# def create_image_message():
-#     # Extract data from the request
-#     data = request.get_json()
-#     print(data)
-#     data = request.get_json()
-#     channel_id = data.get('channel_id')
-#     user_id = data.get('user_id')
-#     image_url = data.get('image_url')
-#     message_date = data.get('message_date')
-
-#     # Create an ImageMessage object
-#     new_image_message = ImageMessage(
-#         channel_id=channel_id,
-#         user_id=user_id,
-#         image_url=image_url,
-#         message_date=message_date
-#     )
-
-#     # # Add the image message to the database
-#     db.session.add(new_image_message)
-#     db.session.commit()
-#     print(f"Channel ID: {channel_id}, User ID: {user_id}, Image URL: {image_url}, Message Date: {message_date}")
-
-#     return jsonify({'message': 'Image message created successfully'})
-
-from datetime import datetime
-
+# 
 @app.route('/image_messages', methods=['POST'])
 def create_image_message():
     # Extract data from the request
@@ -362,6 +344,190 @@ def create_image_message():
 
 
 
+## Authentication
+# 
+# 
+
+# @app.route('/login', methods=['POST'])
+# def login():
+#     email = request.form['email']
+#     password = request.form['password']
+
+#     user = User.query.filter_by(email=email).first()
+#     if user and check_password_hash(user.password, password):
+#         login_user(user)  # Log in the user
+#         return jsonify({'message': 'Login successful'})
+
+#     return jsonify({'message': 'Invalid email or password'}, 401)
+from flask_jwt_extended import create_access_token
+
+@app.route('/login', methods=['POST'])
+def login():
+    email = request.form['email']
+    password = request.form['password']
+
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password, password):
+        # Generate an access token
+        access_token = create_access_token(identity=user.id)  # Use the user's ID as the identity
+
+        # Log in the user
+        login_user(user)
+
+        # Include the access token in the response
+        return jsonify({'access_token': access_token, 'message': 'Login successful'})
+
+    return jsonify({'message': 'Invalid email or password'}, 401)
+
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+
+    # Extract user registration data from the JSON data
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    email = data.get('email')
+    password = data.get('password')
+
+    # Check if the email is not already in use
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({'message': 'Email already in use'}, 409)
+
+    # Create a new user with the hashed password
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=generate_password_hash(password, method='pbkdf2:sha256')
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Log in the newly registered user
+    login_user(new_user)
+
+    return jsonify({'message': 'User registered and logged in'})
+
+@app.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()  # Log out the user
+    return jsonify({'message': 'Logged out successfully'})
+
+@app.route('/protected_route', methods=['GET'])
+@login_required
+def protected_route():
+    # This route is only accessible to authenticated users
+    return jsonify({'message': 'This is a protected route'})
 
 
 
+
+# # Send Invitation endpoint
+# @app.route('/invitations', methods=['POST'])
+# @login_required
+# def send_invitation():
+    
+#     # Extract the necessary data from the request
+#     user_id = current_user.id
+#     channel_id = request.json.get('channel_id')
+#     recipient_email = request.json.get('recipient_email')
+
+#     # Check if the channel exists and belongs to the current user
+#     group_channel = GroupChannel.query.filter_by(id=channel_id, user_id=user_id).first()
+#     if not group_channel:
+#         return jsonify({'message': 'Group channel not found or unauthorized to send invitations'}, 404)
+
+#     # Check if the recipient email exists in the user database
+#     recipient_user = User.query.filter_by(email=recipient_email).first()
+#     if not recipient_user:
+#         return jsonify({'message': 'Recipient email does not exist'}, 404)
+
+#     # Create an invitation
+#     new_invitation = Invitation(sender_id=user_id, recipient_id=recipient_user.id, channel_id=channel_id)
+#     db.session.add(new_invitation)
+#     db.session.commit()
+
+#     # Generate the invitation link
+#     invitation_link = f'http://your-app-url/invitations/{new_invitation.id}/accept'
+
+#     # Send an email to the recipient with the invitation link
+#     send_invitation_email(recipient_user.email, group_channel, invitation_link)
+
+#     return jsonify({'message': 'Invitation sent successfully'})
+
+
+@app.route('/invitations', methods=['POST'])
+@login_required
+def send_invitation():
+    
+    # Extract the necessary data from the request
+    user_id = current_user.id
+    channel_id = request.json.get('channel_id')
+    recipient_email = request.json.get('recipient_email')
+
+    # Check if the channel exists and belongs to the current user
+    group_channel = GroupChannel.query.filter_by(id=channel_id, user_id=user_id).first()
+    if not group_channel:
+        app.logger.error('Group channel not found or unauthorized to send invitations')
+        return jsonify({'message': 'Group channel not found or unauthorized to send invitations'}, 404)
+
+    # Check if the recipient email exists in the user database
+    recipient_user = User.query.filter_by(email=recipient_email).first()
+    if not recipient_user:
+        app.logger.error('Recipient email does not exist')
+        return jsonify({'message': 'Recipient email does not exist'}, 404)
+
+    # Create an invitation
+    new_invitation = Invitation(sender_id=user_id, recipient_id=recipient_user.id, channel_id=channel_id)
+    db.session.add(new_invitation)
+    db.session.commit()
+
+    # Generate the invitation link
+    invitation_link = f'http://your-app-url/invitations/{new_invitation.id}/accept'
+
+    # Send an email to the recipient with the invitation link
+    send_invitation_email(recipient_user.email, group_channel, invitation_link)
+    
+    app.logger.info('Invitation sent successfully')  # Log a success message
+
+    return jsonify({'message': 'Invitation sent successfully'})
+
+
+# Get Invitations endpoint
+@app.route('/invitations', methods=['GET'])
+@login_required
+def get_invitations():
+    # Get the current user's pending invitations
+    user_id = current_user.id
+    invitations = Invitation.query.filter_by(recipient_id=user_id, accepted=False).all()
+    invitation_list = [{'id': invitation.id, 'sender_id': invitation.sender_id, 'channel_id': invitation.channel_id} for invitation in invitations]
+    return jsonify(invitation_list)
+
+
+# Accept Invitation endpoint
+@app.route('/invitations/<int:invitation_id>/accept', methods=['POST'])
+@login_required
+def accept_invitation(invitation_id):
+    # Get the invitation by its ID
+    invitation = Invitation.query.get(invitation_id)
+    if invitation:
+        # Check if the current user is the recipient of the invitation
+        if current_user.id == invitation.recipient_id:
+            # Mark the invitation as accepted
+            invitation.accepted = True
+            db.session.commit()
+            
+            # Add the current user to the group channel
+            user_id = current_user.id
+            group_channel = GroupChannel.query.get(invitation.channel_id)
+            group_channel.members.append(User.query.get(user_id))
+            db.session.commit()
+
+            return jsonify({'message': 'Invitation accepted and user added to the group channel'})
+        else:
+            return jsonify({'message': 'Unauthorized to accept this invitation'}, 403)
+    else:
+        return jsonify({'message': 'Invitation not found'}, 404)

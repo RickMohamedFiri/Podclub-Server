@@ -3,15 +3,35 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy.orm import validates
 from sqlalchemy.orm import relationship
-# from .base import Base  # Import your Base model
+import secrets
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+
 
 db = SQLAlchemy()
+
+def generate_unique_token():
+    token = secrets.token_hex(16)
+    return token
 #classes tables 
 
 
+def generate_unique_token():
+    token = secrets.token_hex(16)  # You can adjust the token length as needed
+    return token
+
 #uses class table
 
-class User(db.Model):
+# class User(db.Model):
+#     __tablename__ = 'users'
+#     id = db.Column(db.Integer, primary_key=True)
+#     first_name = db.Column(db.String(100))
+#     last_name = db.Column(db.String(100))
+#     email = db.Column(db.String(100), unique=True, nullable=False)
+#     password = db.Column(db.String(255), nullable=False)
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     verification_token = db.Column(db.String(64), unique=True)
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100))
@@ -20,41 +40,66 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     verification_token = db.Column(db.String(64), unique=True)
-
     # relationships with other tables
     channels = db.relationship('Channel', backref='user', lazy=True)
     messages = db.relationship('Message', backref='user', lazy=True)
-
-    # Relationship with ReportedUser
-    # Using the `ReportedUser.reporting_user_id` foreign key
     reported_users = db.relationship('ReportedUser', backref='reporting_user', foreign_keys='ReportedUser.reporting_user_id', lazy=True)
-
-    # Relationship with ReportedMessage
-    # Using the `ReportedMessage.user_id` foreign key
     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
-
-
     group_chat_messages = db.relationship('GroupChatMessage', back_populates='user', lazy=True)
     image_messages = relationship('ImageMessage', back_populates='user')
-
-
  # Add a new field to track the number of group channels created by the user.
     # group_channels_count = db.Column(db.Integer, default=0)
 
 
-     #email and password validations 
-    @validates('email')
-    def validate_email(self, key, email):
-        if '@' not in email:
-            raise ValueError('Invalid email format. Must contain "@"')
-        return email
-    
-    @validates('password')
-    def validate_password(self, key, password):
-        if len(password) < 6:
-            raise ValueError("Password must be at least 6 characters long.")
-        return password
+   # Flask-Login UserMixin properties and methods
+    def get_id(self):
+        return str(self.id)
 
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+
+
+    #  #email and password validations 
+    # @validates('email')
+    # def validate_email(self, key, email):
+    #     if '@' not in email:
+    #         raise ValueError('Invalid email format. Must contain "@"')
+    #     return email
+    
+    # @validates('password')
+    # def validate_password(self, key, password):
+    #     if len(password) < 6:
+    #         raise ValueError("Password must be at least 6 characters long.")
+    #     return password
+
+# Add a function to validate and hash passwords
+def validate_and_hash_password(form, field):
+    if len(field.data) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+    return generate_password_hash(field.data, method='sha256')
+
+# Add the email and password validation to the User model
+@validates('email')
+def validate_email(self, key, email):
+    if '@' not in email:
+        raise ValueError('Invalid email format. Must contain "@"')
+    return email
+
+@validates('password')
+def validate_password(self, key, password):
+    if len(password) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+    return validate_and_hash_password(None, password)
 #channels table 
 class Channel(db.Model):
     __tablename__ = 'channels'
@@ -165,3 +210,11 @@ class ImageMessage(db.Model):
 # Add a relationship between GroupChannel and ImageMessage
 GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
 
+class Invitation(db.Model):
+    __tablename__ = 'invitations'
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_email = db.Column(db.String(100), nullable=False)
+    group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
+    token = db.Column(db.String(32), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
