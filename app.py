@@ -12,6 +12,8 @@ from datetime import timedelta
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config['SQLALCHEMYDATABASE_URL']=os.environ.get('DATABASE_URL')
+
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
@@ -29,4 +31,3 @@ print(secret_key)
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
-
