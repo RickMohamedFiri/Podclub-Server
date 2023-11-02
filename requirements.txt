@@ -30,4 +30,4 @@ six
 SQLAlchemy
 SQLAlchemy-serializer
 typing_extensions
-Werkzeu
+Werkzeug
