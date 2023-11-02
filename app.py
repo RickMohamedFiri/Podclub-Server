@@ -19,7 +19,6 @@ api = Api(app)
 jwt = JWTManager(app)
 
 # Configure JWT settings 
-app.config['SQLALCHEMY_DATABASE_URL'] = os.environ.get('DATABASE_URL')
 app.config['JWT_SECRET_KEY'] = 'secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
 
