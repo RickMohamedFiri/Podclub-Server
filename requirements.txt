@@ -11,7 +11,7 @@ filelock>=3.0.10,<4.0
 Flask>=2.2.1,<3.0
 Flask-Admin  # Use the latest available version within the specified range
 Flask-BabelEx>=0.9.4,<1.0
-Flask-Cors>=3.1.1,<4.0
+Flask-Co0rs
 Flask-JWT-Extended>=3.24.1,<4.0
 Flask-Login>=0.5.0,<1.0
 Flask-Mail>=0.9.1,<1.0
