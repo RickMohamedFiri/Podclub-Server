@@ -6,7 +6,6 @@ Babel==2.13.1
 backports.zoneinfo==0.2.1
 bcrypt==3.1.7
 blinker==1.6.2
-Brlapi==0.7.0
 canvas==0.3
 certifi==2019.11.28
 chardet==3.0.4
