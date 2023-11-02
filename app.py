@@ -9,6 +9,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 
+
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
