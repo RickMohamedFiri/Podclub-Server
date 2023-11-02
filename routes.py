@@ -9,6 +9,7 @@ from flask_login import login_user, login_required
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
+
 # from email_module import send_invitation_email
 
 
@@ -359,7 +360,6 @@ def create_image_message():
 #         return jsonify({'message': 'Login successful'})
 
 #     return jsonify({'message': 'Invalid email or password'}, 401)
-from flask_jwt_extended import create_access_token
 
 @app.route('/login', methods=['POST'])
 def login():
