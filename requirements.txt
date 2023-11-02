@@ -19,7 +19,7 @@ Flask-Migrate==4.0.5
 Flask-Principal==0.4.0
 Flask-RESTful==0.3.10
 Flask-Security==3.0.0
-Flask-SQLAlchemy==3.1.1
+Flask-SQLAlchemy
 Flask-WTF==1.2.1
 future==0.18.2
 greenlet==3.0.0
