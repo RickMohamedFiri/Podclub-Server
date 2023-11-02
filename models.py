@@ -11,15 +11,30 @@ db = SQLAlchemy()
 
 #uses class table
 
+# class User(db.Model):
+#     __tablename__ = 'users'
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_name = db.Column(db.String(100))
+#     email = db.Column(db.String(100), unique=True, nullable=False)
+#     password = db.Column(db.String(255), nullable=False)
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     verification_token = db.Column(db.String(64), unique=True)
+#     role = db.Column(db.String(20))
+
 class User(db.Model):
     __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
-    user_name = db.Column(db.String(100))
+    user_name = db.Column(db.String(100))  # Add this line to define the user_name column
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime)
     verification_token = db.Column(db.String(64), unique=True)
     role = db.Column(db.String(20))
+    
+    # Add other columns as needed
+
+
 
     def __init__(self,user_name, email, password, verification_token, role):
         self.user_name = user_name
@@ -208,3 +223,7 @@ class Invitation(db.Model):
     receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
     invitation_date = db.Column(db.Date, nullable=False)
+
+
+
+
