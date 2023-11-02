@@ -1,3 +1,5 @@
+
+
 # models.py
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -6,6 +8,9 @@ from sqlalchemy.orm import relationship
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from sqlalchemy import ForeignKey
+
+
 
 
 db = SQLAlchemy()
@@ -34,7 +39,8 @@ def generate_unique_token():
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    user_name = db.Column(db.String(100))
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -46,6 +52,9 @@ class User(db.Model, UserMixin):
     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
     group_chat_messages = db.relationship('GroupChatMessage', back_populates='user', lazy=True)
     image_messages = relationship('ImageMessage', back_populates='user')
+    # invitations = relationship('Invitation', back_populates='user')
+
+
  # Add a new field to track the number of group channels created by the user.
     # group_channels_count = db.Column(db.Integer, default=0)
 
@@ -160,13 +169,6 @@ class ReportedMessage(db.Model):
 
 
 
-# Define the Admin model with permissions
-class Admin(db.Model):
-    __tablename__ = 'admins'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    can_ban_users = db.Column(db.Boolean, default=False)
-    can_delete_channels = db.Column(db.Boolean, default=False)
 
 
 
@@ -216,15 +218,16 @@ class ImageMessage(db.Model):
 # Add a relationship between GroupChannel and ImageMessage
 GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
 
-class Invitation(db.Model):
-    __tablename__ = 'invitations'
+
+    # Define the Admin model with permissions
+class Admin(db.Model):
+    __tablename__ = 'admins'
     id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    recipient_email = db.Column(db.String(100), nullable=False)
-    group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
-    token = db.Column(db.String(32), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-#user reports table 
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    can_ban_users = db.Column(db.Boolean, default=False)
+    can_delete_channels = db.Column(db.Boolean, default=False)
+
+    #user reports table 
 class UserReport(db.Model):
     __tablename__ = 'user_reports'
     id = db.Column(db.Integer, primary_key=True)
@@ -239,14 +242,12 @@ class UserReport(db.Model):
         self.reported_user_id = reported_user_id
         self.reported_content_id = reported_content_id
         self.action_taken = action_taken
-        
-        
-        
-        #inivitations table 
+
 class Invitation(db.Model):
     __tablename__ = 'invitations'
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-    invitation_date = db.Column(db.Date, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_email = db.Column(db.String(100), nullable=False)
+    group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
+    token = db.Column(db.String(32), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

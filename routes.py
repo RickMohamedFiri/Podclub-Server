@@ -1,5 +1,5 @@
 import secrets
-from flask import jsonify, request,abort
+from flask import jsonify, request,abort,redirect, render_template
 from flask_jwt_extended import JWTManager
 from app import app, db, mail 
 from flask_cors import CORS
@@ -12,7 +12,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
 
-# from email_module import send_invitation_email
+
 
 
 
@@ -46,15 +46,6 @@ def create_or_update_user():
         return jsonify({'message': 'User data updated successfully'})
     return 'welcome to the channels api'
 
-# Initialize the JWT manager
-jwt = JWTManager(app)
-
-# Configure JWT settings 
-app.config['JWT_SECRET_KEY'] = 'secret_key'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
-
-secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
-print(secret_key)
 
 # Create User endpoint
 @app.route('/users', methods=['POST'])
@@ -425,8 +416,6 @@ def create_image_message():
 
 
 ## Authentication
-# 
-# 
 
 # @app.route('/login', methods=['POST'])
 # def login():
@@ -503,41 +492,6 @@ def protected_route():
 
 
 
-
-# # Send Invitation endpoint
-# @app.route('/invitations', methods=['POST'])
-# @login_required
-# def send_invitation():
-    
-#     # Extract the necessary data from the request
-#     user_id = current_user.id
-#     channel_id = request.json.get('channel_id')
-#     recipient_email = request.json.get('recipient_email')
-
-#     # Check if the channel exists and belongs to the current user
-#     group_channel = GroupChannel.query.filter_by(id=channel_id, user_id=user_id).first()
-#     if not group_channel:
-#         return jsonify({'message': 'Group channel not found or unauthorized to send invitations'}, 404)
-
-#     # Check if the recipient email exists in the user database
-#     recipient_user = User.query.filter_by(email=recipient_email).first()
-#     if not recipient_user:
-#         return jsonify({'message': 'Recipient email does not exist'}, 404)
-
-#     # Create an invitation
-#     new_invitation = Invitation(sender_id=user_id, recipient_id=recipient_user.id, channel_id=channel_id)
-#     db.session.add(new_invitation)
-#     db.session.commit()
-
-#     # Generate the invitation link
-#     invitation_link = f'http://your-app-url/invitations/{new_invitation.id}/accept'
-
-#     # Send an email to the recipient with the invitation link
-#     send_invitation_email(recipient_user.email, group_channel, invitation_link)
-
-#     return jsonify({'message': 'Invitation sent successfully'})
-
-
 @app.route('/invitations', methods=['POST'])
 @login_required
 def send_invitation():
@@ -546,6 +500,9 @@ def send_invitation():
     user_id = current_user.id
     channel_id = request.json.get('channel_id')
     recipient_email = request.json.get('recipient_email')
+
+    print("Sending invitation...")
+
 
     # Check if the channel exists and belongs to the current user
     group_channel = GroupChannel.query.filter_by(id=channel_id, user_id=user_id).first()
@@ -565,15 +522,23 @@ def send_invitation():
     db.session.commit()
 
     # Generate the invitation link
-    invitation_link = f'http://your-app-url/invitations/{new_invitation.id}/accept'
+    invitation_link = f'http://127.0.0.1:5001/invitations/{new_invitation.id}/accept'
 
     # Send an email to the recipient with the invitation link
     send_invitation_email(recipient_user.email, group_channel, invitation_link)
     
     app.logger.info('Invitation sent successfully')  # Log a success message
+    print(f"Invitation sent to {recipient_email}")
 
     return jsonify({'message': 'Invitation sent successfully'})
 
+def send_invitation_email(recipient_email, group_channel, invitation_link):
+    msg = Message('You are invited to join a group channel', sender='john.doe@example.com', recipients=[recipient_email])
+
+    # You can use a template to create the email content
+    msg.html = render_template('invitation_email.html', channel=group_channel, invitation_link=invitation_link)
+
+    mail.send(msg)
 
 # Get Invitations endpoint
 @app.route('/invitations', methods=['GET'])
@@ -610,3 +575,13 @@ def accept_invitation(invitation_id):
             return jsonify({'message': 'Unauthorized to accept this invitation'}, 403)
     else:
         return jsonify({'message': 'Invitation not found'}, 404)
+    
+@app.route('/test_send_invitation_email', methods=['GET'])
+def test_send_invitation_email():
+    # Replace these values with actual data for testing
+    recipient_email = 'john.doe@example.com'
+    group_channel = GroupChannel.query.get(1)  # Replace with a valid channel
+    invitation_link = 'http://localhost:5001/invitations/1/accept'  # Replace with a valid link
+    
+    send_invitation_email(recipient_email, group_channel, invitation_link)
+    return 'Test email sent'
