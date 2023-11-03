@@ -4,9 +4,9 @@ from flask_cors import CORS
 from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation,UserReport
 import secrets
 from datetime import timedelta
-from flask_jwt_extended import JWTManager, create_access_token,jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager,jwt_required, get_jwt_identity
 from marshmallow import ValidationError
-from validation import DataValidationSchema,SignupForm
+from validation import DataValidationSchema
 from passlib.hash import sha256_crypt
 
 
@@ -16,15 +16,6 @@ CORS(app)
 def message():
     return 'welcome to the channels api'
 
-# Initialize the JWT manager
-jwt = JWTManager(app)
-
-# Configure JWT settings 
-app.config['JWT_SECRET_KEY'] = 'secret_key'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
-
-secret_key = secrets.token_hex(32)  # Generate a 64-character (32-byte) hex key
-print(secret_key)
 
 # Create User endpoint
 @app.route('/users', methods=['POST'])
@@ -306,52 +297,6 @@ def report_action():
     db.session.commit()
     
     return jsonify({"message": f"Report {report_id} has been {action}ed"})
-
-
-# User signup endpoint 
-@app.route('/signup', methods=['POST'])
-def signup():
-    form = SignupForm(request.form)
-    if form.validate():
-        username = form.username.data
-        password = form.password.data
-        
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            return jsonify({"message": "Username already exists"}), 400
-        
-        # Hash the password before storing it
-        hashed_password = sha256_crypt.hash(password)
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({"message": "User signed up successfully"}), 201
-    else:
-        return jsonify({"message": "Validation error", "errors": form.errors}), 400
-
-# User Login
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    user = User.query.filter_by(username=username).first()
-
-    if user and sha256_crypt.verify(password, user.password):
-        access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token), 200
-    else:
-        return jsonify({"message": "Invalid username or password"}), 401
-    
-# Protected route 
-from flask_jwt_extended import jwt_required
-
-@app.route('/protected', methods=['GET'])
-@jwt_required
-def protected_route():
-    # Only authenticated users can access this route
-    return jsonify({"message": "You have access to this protected route"})
 
 # join multiple channels
 @app.route('/accept-invitation/<int:invitation_id>', methods=['POST'])
