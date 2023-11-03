@@ -48,6 +48,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = "yusramoham99@gmail.com"
 app.config['MAIL_PASSWORD'] = 'rsoq uhor wqex hwan'
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 
 
 

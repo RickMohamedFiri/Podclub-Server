@@ -89,5 +89,8 @@ def seed_database():
         db.session.add_all([admin1, admin2])
         db.session.commit()
 
+       
+
+
 if __name__ == '__main__':
     seed_database()

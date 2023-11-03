@@ -492,96 +492,28 @@ def protected_route():
 
 
 
-@app.route('/invitations', methods=['POST'])
-@login_required
-def send_invitation():
-    
-    # Extract the necessary data from the request
-    user_id = current_user.id
-    channel_id = request.json.get('channel_id')
-    recipient_email = request.json.get('recipient_email')
 
-    print("Sending invitation...")
+@app.route('/send_invitation_email', methods=['POST'])
+def send_invitation_email():
+    if request.method == 'POST':
+        recipient_email = request.json.get('recipient_email')
+        channel_id = request.json.get('channel_id')
+        invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept'
 
+        # Create an email message
+        subject = 'You are invited to join our group channel'
+        body = f'Click the following link to join our group channel: {invitation_link}'
+        sender = 'yusramoham99@gmail.com'  # Replace with your email address
+        recipients = [recipient_email]
 
-    # Check if the channel exists and belongs to the current user
-    group_channel = GroupChannel.query.filter_by(id=channel_id, user_id=user_id).first()
-    if not group_channel:
-        app.logger.error('Group channel not found or unauthorized to send invitations')
-        return jsonify({'message': 'Group channel not found or unauthorized to send invitations'}, 404)
+        msg = Message(subject=subject, sender=sender, recipients=recipients)
+        msg.body = body
 
-    # Check if the recipient email exists in the user database
-    recipient_user = User.query.filter_by(email=recipient_email).first()
-    if not recipient_user:
-        app.logger.error('Recipient email does not exist')
-        return jsonify({'message': 'Recipient email does not exist'}, 404)
+        try:
+            mail.send(msg)
+            return jsonify({'message': 'Invitation email sent successfully'})
+        except Exception as e:
+            return jsonify({'message': f'Failed to send the invitation email: {str(e)}'}, 500)
 
-    # Create an invitation
-    new_invitation = Invitation(sender_id=user_id, recipient_id=recipient_user.id, channel_id=channel_id)
-    db.session.add(new_invitation)
-    db.session.commit()
+    return jsonify({'message': 'Invalid request'}, 400)
 
-    # Generate the invitation link
-    invitation_link = f'http://127.0.0.1:5001/invitations/{new_invitation.id}/accept'
-
-    # Send an email to the recipient with the invitation link
-    send_invitation_email(recipient_user.email, group_channel, invitation_link)
-    
-    app.logger.info('Invitation sent successfully')  # Log a success message
-    print(f"Invitation sent to {recipient_email}")
-
-    return jsonify({'message': 'Invitation sent successfully'})
-
-def send_invitation_email(recipient_email, group_channel, invitation_link):
-    msg = Message('You are invited to join a group channel', sender='john.doe@example.com', recipients=[recipient_email])
-
-    # You can use a template to create the email content
-    msg.html = render_template('invitation_email.html', channel=group_channel, invitation_link=invitation_link)
-
-    mail.send(msg)
-
-# Get Invitations endpoint
-@app.route('/invitations', methods=['GET'])
-@login_required
-def get_invitations():
-    # Get the current user's pending invitations
-    user_id = current_user.id
-    invitations = Invitation.query.filter_by(recipient_id=user_id, accepted=False).all()
-    invitation_list = [{'id': invitation.id, 'sender_id': invitation.sender_id, 'channel_id': invitation.channel_id} for invitation in invitations]
-    return jsonify(invitation_list)
-
-
-# Accept Invitation endpoint
-@app.route('/invitations/<int:invitation_id>/accept', methods=['POST'])
-@login_required
-def accept_invitation(invitation_id):
-    # Get the invitation by its ID
-    invitation = Invitation.query.get(invitation_id)
-    if invitation:
-        # Check if the current user is the recipient of the invitation
-        if current_user.id == invitation.recipient_id:
-            # Mark the invitation as accepted
-            invitation.accepted = True
-            db.session.commit()
-            
-            # Add the current user to the group channel
-            user_id = current_user.id
-            group_channel = GroupChannel.query.get(invitation.channel_id)
-            group_channel.members.append(User.query.get(user_id))
-            db.session.commit()
-
-            return jsonify({'message': 'Invitation accepted and user added to the group channel'})
-        else:
-            return jsonify({'message': 'Unauthorized to accept this invitation'}, 403)
-    else:
-        return jsonify({'message': 'Invitation not found'}, 404)
-    
-@app.route('/test_send_invitation_email', methods=['GET'])
-def test_send_invitation_email():
-    # Replace these values with actual data for testing
-    recipient_email = 'john.doe@example.com'
-    group_channel = GroupChannel.query.get(1)  # Replace with a valid channel
-    invitation_link = 'http://localhost:5001/invitations/1/accept'  # Replace with a valid link
-    
-    send_invitation_email(recipient_email, group_channel, invitation_link)
-    return 'Test email sent'
