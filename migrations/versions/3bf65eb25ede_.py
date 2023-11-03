@@ -1,8 +1,8 @@
-"""Add ImageMessage and update relationships
+"""empty message
 
-Revision ID: 20dbc46dcf95
+Revision ID: 3bf65eb25ede
 Revises: 
-Create Date: 2023-10-31 10:12:46.358155
+Create Date: 2023-11-01 14:49:21.402656
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '20dbc46dcf95'
+revision = '3bf65eb25ede'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -79,6 +79,18 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('invitations',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('sender_id', sa.Integer(), nullable=False),
+    sa.Column('recipient_email', sa.String(length=100), nullable=False),
+    sa.Column('group_channel_id', sa.Integer(), nullable=False),
+    sa.Column('token', sa.String(length=32), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['group_channel_id'], ['group_channels.id'], ),
+    sa.ForeignKeyConstraint(['sender_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('token')
+    )
     op.create_table('messages',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message', sa.Text(), nullable=False),
@@ -124,6 +136,7 @@ def downgrade():
     op.drop_table('reported_users')
     op.drop_table('reported_messages')
     op.drop_table('messages')
+    op.drop_table('invitations')
     op.drop_table('image_messages')
     op.drop_table('group_messages')
     op.drop_table('group_chat_messages')

@@ -1,19 +1,54 @@
-from flask import jsonify, request,abort
-from app import app, db
+from flask import jsonify, request,abort,redirect, render_template
+from flask_jwt_extended import JWTManager
+from app import app, db, mail 
 from flask_cors import CORS
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation,UserReport
 import secrets
 from datetime import timedelta
 from flask_jwt_extended import JWTManager,jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from validation import DataValidationSchema
 from passlib.hash import sha256_crypt
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation,UserReport
+from datetime import datetime
+from flask_mail import Message, Mail
+from flask_jwt_extended import create_access_token, jwt_required
+from flask_login import login_user, login_required
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
+
+
+
+
+
+
+
+
+mail = Mail(app)
 
 
 CORS(app)
 
 @app.route('/')
 def message():
+    return 'Welcome to the channels API'
+
+# Create User endpoint
+
+@app.route('/users', methods=['POST', 'PUT'])
+def create_or_update_user():
+    if request.method == 'POST':
+        new_user = User(
+            user_name=request.json.get('user_name'),
+            email=request.json.get('email'),
+            password=request.json.get('password')
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'User created successfully'})
+    elif request.method == 'PUT':
+        # Handle PUT request logic 
+        return jsonify({'message': 'User data updated successfully'})
     return 'welcome to the channels api'
 
 
@@ -206,7 +241,7 @@ def update_reported_user(reported_user_id):
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
 
-# Delete ReportedUser endpoint
+# Delete ReportedUser endpoint              
 @app.route('/reported_users/<int:reported_user_id>', methods=['DELETE'])
 def delete_reported_user(reported_user_id):
     reported_user = ReportedUser.query.get(reported_user_id)
@@ -221,6 +256,174 @@ def delete_reported_user(reported_user_id):
 @app.route('/report_user', methods=['POST'])
 @jwt_required
 def report_user():
+
+
+
+# Get all ReportedUsers endpoint (only accessible to admins)
+@app.route('/admin/reported_users', methods=['GET'])
+def get_all_reported_users_admin():
+    # Check if the current user is an admin with permission to view reported users
+    current_user = User.query.get(1) 
+    if not current_user or not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_users = ReportedUser.query.all()
+    reported_user_list = []
+
+    for reported_user in reported_users:
+        user = User.query.get(reported_user.user_id)
+        reported_user_list.append({
+            'id': reported_user.id,
+            'user_id': reported_user.user_id,
+            'username': user.user_name,
+            'is_banned': reported_user.is_banned
+        })
+
+    return jsonify({'reported_users': reported_user_list})
+
+# Ban Reported User endpoint (only accessible to admins)
+@app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
+def ban_user(user_id):
+    # Check if the current user is an admin with permission to ban users
+    current_user = User.query.get(1)  
+    if not current_user or not current_user.is_admin or not current_user.admin_permissions.can_ban_users:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_user = ReportedUser.query.filter_by(user_id=user_id).first()
+    if reported_user:
+        reported_user.is_banned = True
+        db.session.commit()
+        return jsonify({'message': 'User banned successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
+
+# Unban Reported User endpoint (only accessible to admins)
+@app.route('/admin/unban_user/<int:user_id>', methods=['POST'])
+def unban_user(user_id):
+    # Check if the current user is an admin with permission to unban users
+    current_user = User.query.get(1)  
+    if not current_user or not current_user.is_admin or not current_user.admin_permissions.can_ban_users:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    reported_user = ReportedUser.query.filter_by(user_id=user_id).first()
+    if reported_user:
+        reported_user.is_banned = False
+        db.session.commit()
+        return jsonify({'message': 'User unbanned successfully'})
+    else:
+        return jsonify({'message': 'Reported user not found'}, 404)
+# Create the group channel endpoint
+@app.route('/group_channels', methods=['POST'])
+def create_group_channel():
+    # Extract user input from the request
+    user_id = request.json.get('user_id')
+    channel_name = request.json.get('channel_name')
+    description = request.json.get('description')
+
+    # Create the group channel in the database
+    new_channel = GroupChannel(user_id=user_id, channel_name=channel_name, description=description)
+    db.session.add(new_channel)
+    db.session.commit()
+
+    return jsonify({'message': 'Group channel created successfully'})
+# @app.route('/group_channels', methods=['POST'])
+# def create_group_channel():
+#     user_id = request.json.get('user_id')
+#     # Check if the user has reached the maximum limit of group channels (e.g., 5).
+#     user = User.query.get(user_id)
+#     if user and user.group_channels_count < 5:
+#         # The user can create a new group channel. Increment the group_channels_count.
+#         user.group_channels_count += 1
+#         new_channel = GroupChannel(user_id=user_id, channel_name=request.json['channel_name'], description=request.json['description'])
+#         db.session.add(new_channel)
+#         db.session.commit()
+#         return jsonify({'message': 'Group channel created successfully'})
+#     else:
+#         return jsonify({'message': 'Maximum limit of group channels reached for this user'}, 403)
+
+# Update Group Channel Description endpoin
+@app.route('/group_channels/<int:channel_id>', methods=['PATCH'])
+def update_group_channel_description(channel_id):
+    # Find the group channel by its ID
+    channel = GroupChannel.query.get(channel_id)
+    if channel:
+        # Update the channel description
+        new_description = request.json.get('new_description')
+        channel.description = new_description
+        db.session.commit()
+        return jsonify({'message': 'Group channel description updated successfully'})
+    else:
+        return jsonify({'message': 'Group channel not found'}, 404)
+
+
+
+# Create the group chat message endpoint
+@app.route('/group_chat_messages', methods=['POST'])
+def add_message_to_group_chat():
+    # Extract message content and user ID from the request
+    user_id = request.json.get('user_id')
+    message_content = request.json.get('message_content')
+    channel_id = request.json.get('channel_id')  # Add channel ID to the request
+
+    # Create and store the message in the database
+    new_message = GroupChatMessage(channel_id=channel_id, user_id=user_id, content=message_content)
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({'message': 'Message added to the group chat'})
+
+# Reply to Message in group chat enpoint
+@app.route('/group_chat_messages/<int:message_id>/reply', methods=['POST'])
+def reply_to_message(message_id):
+    # Extract user ID and reply content from the request
+    user_id = request.json.get('user_id')
+    reply_content = request.json.get('reply_content')
+    channel_id = request.json.get('channel_id')  # Add channel ID to the request
+
+    # Create and store the reply in the database
+    new_reply = GroupChatMessage(channel_id=channel_id, user_id=user_id, content=reply_content, parent_message_id=message_id)
+    db.session.add(new_reply)
+    db.session.commit()
+
+    return jsonify({'message': 'Reply added to the message'})
+
+# Update group chat message endpoint
+@app.route('/group_chat_messages/<int:message_id>', methods=['PATCH'])
+def update_group_chat_message(message_id):
+    # Extract user ID and updated message content from the request
+    user_id = request.json.get('user_id')
+    updated_message_content = request.json.get('updated_message_content')
+
+    # Find the message to update
+    message = GroupChatMessage.query.filter_by(id=message_id, user_id=user_id).first()
+
+    if message:
+        message.content = updated_message_content
+        db.session.commit()
+        return jsonify({'message': 'Message updated successfully'})
+    else:
+        return jsonify({'message': 'Message not found or unauthorized to update'}, 404)
+
+# Delete group chat message endpoint
+@app.route('/group_chat_messages/<int:message_id>', methods=['DELETE'])
+def delete_group_chat_message(message_id):
+    # Extract user ID from the request
+    user_id = request.json.get('user_id')
+
+    # Find the message to delete
+    message = GroupChatMessage.query.filter_by(id=message_id, user_id=user_id).first()
+
+    if message:
+        db.session.delete(message)
+        db.session.commit()
+        return jsonify({'message': 'Message deleted successfully'})
+    else:
+        return jsonify({'message': 'Message not found or unauthorized to delete'}, 404)
+
+# 
+@app.route('/image_messages', methods=['POST'])
+def create_image_message():
+    # Extract data from the request
     data = request.get_json()
     reporting_user_id = get_jwt_identity()
     reported_user_id = data.get('reported_user_id')
@@ -323,5 +526,110 @@ def accept_invitation(invitation_id):
             return jsonify({'message': 'Unauthorized: You cannot accept this invitation'}, 403)
     else:
         return jsonify({'message': 'Invitation not found'}, 404)
+    # Return a JSON response
+    return jsonify({'message': 'Image message created successfully'})
 
+
+
+## Authentication
+
+# @app.route('/login', methods=['POST'])
+# def login():
+#     email = request.form['email']
+#     password = request.form['password']
+
+#     user = User.query.filter_by(email=email).first()
+#     if user and check_password_hash(user.password, password):
+#         login_user(user)  # Log in the user
+#         return jsonify({'message': 'Login successful'})
+
+#     return jsonify({'message': 'Invalid email or password'}, 401)
+
+@app.route('/login', methods=['POST'])
+def login():
+    email = request.form['email']
+    password = request.form['password']
+
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password, password):
+        # Generate an access token
+        access_token = create_access_token(identity=user.id)  # Use the user's ID as the identity
+
+        # Log in the user
+        login_user(user)
+
+        # Include the access token in the response
+        return jsonify({'access_token': access_token, 'message': 'Login successful'})
+
+    return jsonify({'message': 'Invalid email or password'}, 401)
+
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+
+    # Extract user registration data from the JSON data
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    email = data.get('email')
+    password = data.get('password')
+
+    # Check if the email is not already in use
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return jsonify({'message': 'Email already in use'}, 409)
+
+    # Create a new user with the hashed password
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=generate_password_hash(password, method='pbkdf2:sha256')
+    )
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Log in the newly registered user
+    login_user(new_user)
+
+    return jsonify({'message': 'User registered and logged in'})
+
+@app.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()  # Log out the user
+    return jsonify({'message': 'Logged out successfully'})
+
+@app.route('/protected_route', methods=['GET'])
+@login_required
+def protected_route():
+    # This route is only accessible to authenticated users
+    return jsonify({'message': 'This is a protected route'})
+
+
+
+
+@app.route('/send_invitation_email', methods=['POST'])
+def send_invitation_email():
+    if request.method == 'POST':
+        recipient_email = request.json.get('recipient_email')
+        channel_id = request.json.get('channel_id')
+        invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept'
+
+        # Create an email message
+        subject = 'You are invited to join our group channel'
+        body = f'Click the following link to join our group channel: {invitation_link}'
+        sender = 'yusramoham99@gmail.com'  # Replace with your email address
+        recipients = [recipient_email]
+
+        msg = Message(subject=subject, sender=sender, recipients=recipients)
+        msg.body = body
+
+        try:
+            mail.send(msg)
+            return jsonify({'message': 'Invitation email sent successfully'})
+        except Exception as e:
+            return jsonify({'message': f'Failed to send the invitation email: {str(e)}'}, 500)
+
+    return jsonify({'message': 'Invalid request'}, 400)
 

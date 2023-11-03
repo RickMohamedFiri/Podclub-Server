@@ -1,57 +1,113 @@
+
+
+# models.py
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy.orm import validates
+from sqlalchemy.orm import relationship
+import secrets
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
+from sqlalchemy import ForeignKey
+
+
+
 
 db = SQLAlchemy()
+
+def generate_unique_token():
+    token = secrets.token_hex(16)
+    return token
 #classes tables 
 
-#users class table
 
-class User(db.Model):
+def generate_unique_token():
+    token = secrets.token_hex(16)  # You can adjust the token length as needed
+    return token
+
+#uses class table
+
+# class User(db.Model):
+#     __tablename__ = 'users'
+#     id = db.Column(db.Integer, primary_key=True)
+#     first_name = db.Column(db.String(100))
+#     last_name = db.Column(db.String(100))
+#     email = db.Column(db.String(100), unique=True, nullable=False)
+#     password = db.Column(db.String(255), nullable=False)
+#     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+#     verification_token = db.Column(db.String(64), unique=True)
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    user_name = db.Column(db.String(100))
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     verification_token = db.Column(db.String(64), unique=True)
-    role = db.Column(db.String(20))
-
-    def __init__(self,user_name, email, password, verification_token, role):
-        self.user_name = user_name
-        self.email = email
-        self.password = password 
-        self.verification_token = verification_token
-        self.role = role
-
-    def __repr__(self):
-        return f"<User(id={self.id}, email={self.email}, role={self.role})>"
-
     # relationships with other tables
     channels = db.relationship('Channel', backref='user', lazy=True)
     messages = db.relationship('Message', backref='user', lazy=True)
-
-    # Relationship with ReportedUser
-    # Using the `ReportedUser.reporting_user_id` foreign key
     reported_users = db.relationship('ReportedUser', backref='reporting_user', foreign_keys='ReportedUser.reporting_user_id', lazy=True)
-
-    # Relationship with ReportedMessage
-    # Using the `ReportedMessage.user_id` foreign key
     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
+    group_chat_messages = db.relationship('GroupChatMessage', back_populates='user', lazy=True)
+    image_messages = relationship('ImageMessage', back_populates='user')
+    # invitations = relationship('Invitation', back_populates='user')
 
-     #email and password validations 
-    @validates('email')
-    def validate_email(self, key, email):
-        if '@' not in email:
-            raise ValueError('Invalid email format. Must contain "@"')
-        return email
+
+ # Add a new field to track the number of group channels created by the user.
+    # group_channels_count = db.Column(db.Integer, default=0)
+
+
+   # Flask-Login UserMixin properties and methods
+    def get_id(self):
+        return str(self.id)
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+
+
+    #  #email and password validations 
+    # @validates('email')
+    # def validate_email(self, key, email):
+    #     if '@' not in email:
+    #         raise ValueError('Invalid email format. Must contain "@"')
+    #     return email
     
-    @validates('password')
-    def validate_password(self, key, password):
-        if len(password) < 6:
-            raise ValueError("Password must be at least 6 characters long.")
-        return password
+    # @validates('password')
+    # def validate_password(self, key, password):
+    #     if len(password) < 6:
+    #         raise ValueError("Password must be at least 6 characters long.")
+    #     return password
 
+# Add a function to validate and hash passwords
+def validate_and_hash_password(form, field):
+    if len(field.data) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+    return generate_password_hash(field.data, method='sha256')
+
+# Add the email and password validation to the User model
+@validates('email')
+def validate_email(self, key, email):
+    if '@' not in email:
+        raise ValueError('Invalid email format. Must contain "@"')
+    return email
+
+@validates('password')
+def validate_password(self, key, password):
+    if len(password) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+    return validate_and_hash_password(None, password)
 #channels table 
 class Channel(db.Model):
     __tablename__ = 'channels'
@@ -113,7 +169,16 @@ class Invitation(db.Model):
     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
     invitation_date = db.Column(db.Date, nullable=False)
 
-#user reports table 
+
+    # Define the Admin model with permissions
+class Admin(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    can_ban_users = db.Column(db.Boolean, default=False)
+    can_delete_channels = db.Column(db.Boolean, default=False)
+
+    #user reports table 
 class UserReport(db.Model):
     __tablename__ = 'user_reports'
     id = db.Column(db.Integer, primary_key=True)
@@ -129,3 +194,11 @@ class UserReport(db.Model):
         self.reported_content_id = reported_content_id
         self.action_taken = action_taken
 
+class Invitation(db.Model):
+    __tablename__ = 'invitations'
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_email = db.Column(db.String(100), nullable=False)
+    group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
+    token = db.Column(db.String(32), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
