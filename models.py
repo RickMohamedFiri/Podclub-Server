@@ -251,3 +251,5 @@ class Invitation(db.Model):
     group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
     token = db.Column(db.String(32), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    

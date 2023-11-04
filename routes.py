@@ -1,5 +1,5 @@
 import secrets
-from flask import jsonify, request,abort,redirect, render_template
+from flask import jsonify, request,abort,redirect, render_template, url_for
 from flask_jwt_extended import JWTManager
 from app import app, db, mail 
 from flask_cors import CORS
@@ -320,7 +320,20 @@ def update_group_channel_description(channel_id):
     else:
         return jsonify({'message': 'Group channel not found'}, 404)
 
+# Create the route to delete a group channel 
+@app.route('/group_channels/<int:channel_id>', methods=['DELETE'])
+def delete_group_channel(channel_id):
+    # Find the group channel by its ID
+    channel = GroupChannel.query.get(channel_id)
 
+    if not channel:
+        return jsonify({'message': 'Group channel not found'}, 404)
+
+    # Delete the channel
+    db.session.delete(channel)
+    db.session.commit()
+
+    return jsonify({'message': 'Group channel deleted successfully'})
 
 # Create the group chat message endpoint
 @app.route('/group_chat_messages', methods=['POST'])
@@ -493,12 +506,41 @@ def protected_route():
 
 
 
+# @app.route('/send_invitation_email', methods=['POST'])
+# def send_invitation_email():
+#     if request.method == 'POST':
+#         recipient_email = request.json.get('recipient_email')
+#         channel_id = request.json.get('channel_id')
+#         invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept'
+
+#         # Create an email message
+#         subject = 'You are invited to join our group channel'
+#         body = f'Click the following link to join our group channel: {invitation_link}'
+#         sender = 'yusramoham99@gmail.com'  # Replace with your email address
+#         recipients = [recipient_email]
+
+#         msg = Message(subject=subject, sender=sender, recipients=recipients)
+#         msg.body = body
+
+#         try:
+#             mail.send(msg)
+#             return jsonify({'message': 'Invitation email sent successfully'})
+#         except Exception as e:
+#             return jsonify({'message': f'Failed to send the invitation email: {str(e)}'}, 500)
+
+#     return jsonify({'message': 'Invalid request'}, 400)
+
 @app.route('/send_invitation_email', methods=['POST'])
 def send_invitation_email():
     if request.method == 'POST':
         recipient_email = request.json.get('recipient_email')
         channel_id = request.json.get('channel_id')
-        invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept'
+        
+        # Generate a unique token for this invitation
+        unique_token = secrets.token_urlsafe(16)  # Generate a 32-character URL-safe token
+        
+        # Create the invitation link with the unique token
+        invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept?token={unique_token}'
 
         # Create an email message
         subject = 'You are invited to join our group channel'
@@ -517,3 +559,67 @@ def send_invitation_email():
 
     return jsonify({'message': 'Invalid request'}, 400)
 
+
+# # Add this route to your application
+# @app.route('/accept_invitation/<token>', methods=['GET'])
+# def accept_invitation(token):
+#     # Find the invitation with the provided token
+#     invitation = Invitation.query.filter_by(token=token).first()
+
+#     if invitation:
+#         # Check if the invitation is not expired (if you have an expiration check)
+#         # Check if the recipient is not already a member of the group
+
+#         # Associate the user with the group channel
+#         user = User.query.filter_by(email=invitation.recipient_email).first()
+#         if user:
+#             group_channel = GroupChannel.query.get(invitation.group_channel_id)
+#             if group_channel:
+#                 user.group_channels.append(group_channel)
+#                 db.session.commit()
+
+#             # You can also delete the invitation if needed
+#             db.session.delete(invitation)
+#             db.session.commit()
+
+#             return redirect(url_for('group_channel_page', channel_id=group_channel.id))
+#         else:
+#             return jsonify({'message': 'User not found'}, 404)
+#     else:
+#         return jsonify({'message': 'Invalid or expired invitation link'}, 400)
+
+
+@app.route('/accept_invitation/<token>', methods=['GET'])
+def accept_invitation(token):
+    print(f"Received invitation token: {token}")  # Debugging statement
+
+    # Find the invitation with the provided token
+    invitation = Invitation.query.filter_by(token=token).first()
+    if invitation:
+        print(f"Invitation found: {invitation.id}")  # Debugging statement
+
+        # Check if the invitation is not expired (if you have an expiration check)
+        # Debugging statement for expiration check:
+        if invitation.is_expired:
+            print("Invitation is expired")
+            return jsonify({'message': 'Invitation has expired'}, 400)
+
+        # Check if the recipient is not already a member of the group
+        user = User.query.filter_by(email=invitation.recipient_email).first()
+        if user:
+            print(f"User found: {user.id}")  # Debugging statement
+            group_channel = GroupChannel.query.get(invitation.group_channel_id)
+            if group_channel:
+                user.group_channels.append(group_channel)
+                db.session.commit()
+                print(f"User added to group channel: {group_channel.id}")  # Debugging statement
+            else:
+                print("Group channel not found")  # Debugging statement
+        else:
+            print("User not found")  # Debugging statement
+            return jsonify({'message': 'User not found'}, 404)
+    else:
+        print("Invalid or expired invitation link")  # Debugging statement
+        return jsonify({'message': 'Invalid or expired invitation link'}, 400)
+
+    return redirect(url_for('group_channel_page', channel_id=group_channel.id))
