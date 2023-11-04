@@ -2,7 +2,7 @@
 import secrets
 import string
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin,UserReport
 from datetime import datetime
 
 def seed_database():
@@ -77,10 +77,17 @@ def seed_database():
             invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
         )
 
-        ## Add invitations to the session
+        # Add invitations to the session
         db.session.add_all([invitation1, invitation2])
         db.session.commit()
 
+        # Create and add UserReport records
+        user_report1 = UserReport(reporting_user_id=user1.id, reported_user_id=user2.id, reported_content_id=101, action_taken='No action taken')
+        user_report2 = UserReport(reporting_user_id=user2.id, reported_user_id=user1.id, reported_content_id=102, action_taken='Warning issued')
+
+        # Add UserReport instances to the session
+        db.session.add_all([user_report1, user_report2])
+        db.session.commit()
         # Create and add admin records
         admin1 = Admin(user_id=user1.id, can_ban_users=True, can_delete_channels=True)
         admin2 = Admin(user_id=user2.id, can_ban_users=True, can_delete_channels=False)

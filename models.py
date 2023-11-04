@@ -117,11 +117,7 @@ class Channel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     messages = db.relationship('Message', backref='channel', lazy=True)
-    # group_messages = db.relationship('GroupMessage', backref='channel', lazy=True)
-    # group_messages = db.relationship('GroupMessage', backref='channel', lazy=True,
-    # primaryjoin="Channel.id == GroupMessage.channel_id")
-    group_messages = db.relationship('GroupMessage', primaryjoin="Channel.id == GroupMessage.channel_id", back_populates='channel')
-
+    group_messages = db.relationship('GroupMessage', backref='channel', lazy=True)
 
 #messsage table 
 class Message(db.Model):
@@ -138,11 +134,9 @@ class Message(db.Model):
 class GroupMessage(db.Model):
     __tablename__ = 'group_messages'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    # channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     joined_at = db.Column(db.DateTime, default=datetime.utcnow)
-    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-    channel = db.relationship('Channel', primaryjoin="GroupMessage.channel_id == Channel.id", back_populates='group_messages')
 
 #reported_users table
 class ReportedUser(db.Model):
@@ -166,57 +160,14 @@ class ReportedMessage(db.Model):
     __table_args__ = (db.ForeignKeyConstraint([reporting_user_id], ['users.id']),)
     
     
-
-
-
-
-
-
-class GroupChannel(db.Model):
-    __tablename__ = 'group_channels'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    channel_name = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    messages = db.relationship('GroupChatMessage', backref='group_channel', lazy=True)
-
-# Define the GroupChatMessage model
-class GroupChatMessage(db.Model):
-    __tablename__ = 'group_chat_messages'
-    id = db.Column(db.Integer, primary_key=True)
-    channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    message_date = db.Column(db.DateTime, default=datetime.utcnow)
-    parent_message_id = db.Column(db.Integer, db.ForeignKey('group_chat_messages.id'))
-    # reported_messages = db.relationship('ReportedMessage', backref='group_message', foreign_keys='ReportedMessage.message_id', lazy=True)
-    reported_messages = db.relationship('ReportedMessage', backref='group_message_relationship',  foreign_keys='ReportedMessage.message_id', primaryjoin='GroupChatMessage.id == ReportedMessage.message_id', lazy=True)
-    # Define the relationship between GroupChatMessage and User (author)
-    user = db.relationship('User', back_populates='messages')
-    # Define the relationship between GroupChatMessage and GroupChannel
-    channel = db.relationship('GroupChannel', back_populates='messages')
-    user = db.relationship('User', back_populates='group_chat_messages')
-    content = db.Column(db.String(255))
-
-
-
-#  image messages
-class ImageMessage(db.Model):
-    __tablename__ = 'image_messages'
-    id = db.Column(db.Integer, primary_key=True)
-    channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    image_url = db.Column(db.String(255), nullable=False)
-    message_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Define the relationship between ImageMessage and User (author)
-    user = db.relationship('User', back_populates='image_messages')
-    # Define the relationship between ImageMessage and GroupChannel
-    channel = db.relationship('GroupChannel', back_populates='image_messages')
-
-# Add a relationship between GroupChannel and ImageMessage
-GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
+#inivitations table 
+class Invitation(db.Model):
+    __tablename__ = 'invitations'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    invitation_date = db.Column(db.Date, nullable=False)
 
 
     # Define the Admin model with permissions
@@ -237,7 +188,7 @@ class UserReport(db.Model):
     report_date = db.Column(db.DateTime, default=datetime.utcnow)
     action_taken = db.Column(db.String(50))  # Store the action taken by moderators
 
-    def __init__(self, reporting_user_id, reported_user_id, reported_content_id, action_taken):
+    def __init__(self, reporting_user_id, reported_user_id, reported_content_id,action_taken):
         self.reporting_user_id = reporting_user_id
         self.reported_user_id = reported_user_id
         self.reported_content_id = reported_content_id
