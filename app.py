@@ -12,8 +12,8 @@ from datetime import timedelta
 
 app = Flask(__name__)
 app.config.from_object(Config)
-# app.config['SQLALCHEMYDATABASE_URL']=os.environ.get('DATABASE_URL')
-app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMYDATABASE_URL']=os.environ.get('DATABASE_URL')
+# app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
 
 db.init_app(app)
 migrate = Migrate(app, db)
