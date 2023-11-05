@@ -3,7 +3,13 @@ from flask import jsonify, request,abort,redirect, render_template, url_for
 from flask_jwt_extended import JWTManager
 from app import app, db, mail 
 from flask_cors import CORS
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation
+import secrets
+from datetime import timedelta
+from flask_jwt_extended import JWTManager,jwt_required, get_jwt_identity
+from marshmallow import ValidationError
+from validation import DataValidationSchema
+from passlib.hash import sha256_crypt
+from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation,UserReport
 from datetime import datetime
 from flask_mail import Message, Mail
 from flask_jwt_extended import create_access_token, jwt_required
@@ -13,8 +19,6 @@ from werkzeug.security import check_password_hash
 from werkzeug.security import generate_password_hash
 
 mail = Mail(app)
-
-
 CORS(app)
 
 @app.route('/')
@@ -22,7 +26,6 @@ def message():
     return 'Welcome to the channels API'
 
 # Create User endpoint
-
 @app.route('/users', methods=['POST', 'PUT'])
 def create_or_update_user():
     if request.method == 'POST':
@@ -43,30 +46,56 @@ def create_or_update_user():
 # Create User endpoint
 @app.route('/users', methods=['POST'])
 def create_user():
-    new_user = User(user_name=request.json['user_name'], email=request.json['email'], password=request.json['password'])
+    data = request.get_json()
+    user_name = data.get('user_name')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not user_name or not email or not password:
+        return jsonify({'message': 'Please provide user_name, email, and password'}), 400
+
+    existing_user = User.query.filter_by(user_name=user_name).first()
+
+    if existing_user:
+        return jsonify({'message': 'Username already exists'}), 400
+
+    hashed_password = sha256_crypt.hash(password)
+    new_user = User(user_name=user_name, email=email, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({'message': 'User created successfully'})
-
+    return jsonify({'message': 'User created successfully'}), 201
 # Get all Users endpoint
 @app.route('/users', methods=['GET'])
 def get_all_users():
     users = User.query.all()
     user_list = [{'id': user.id, 'user_name': user.user_name, 'email': user.email} for user in users]
     return jsonify(user_list)
-
 # Update User endpoint
 @app.route('/users/<int:user_id>', methods=['PATCH'])
+@jwt_required
 def update_user(user_id):
+    current_user_id = get_jwt_identity()
     user = User.query.get(user_id)
-    if user:
-        user.user_name = request.json.get('user_name', user.user_name)
-        user.email = request.json.get('email', user.email)
-        user.password = request.json.get('password', user.password)
-        db.session.commit()
-        return jsonify({'message': 'User updated successfully'})
-    else:
-        return jsonify({'message': 'User not found'}, 404)
+
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    if user.id != current_user_id:
+        return jsonify({'message': 'You can only update your own user profile'}), 403
+
+    data = request.get_json()
+    new_user_name = data.get('user_name')
+    new_password = data.get('password')
+
+    if new_user_name:
+        user.user_name = new_user_name
+
+    if new_password:
+        user.password = sha256_crypt(salt=b"your_salt").hash(new_password)
+
+    db.session.commit()
+    return jsonify({'message': 'User profile updated successfully'})
+
 
 # Create Channel endpoint
 @app.route('/channels', methods=['POST'])
@@ -213,8 +242,6 @@ def delete_reported_user(reported_user_id):
         return jsonify({'message': 'Reported user deleted successfully'})
     else:
         return jsonify({'message': 'Reported user not found'}, 404)
-
-
 
 
 # Get all ReportedUsers endpoint (only accessible to admins)
@@ -380,7 +407,7 @@ def delete_group_chat_message(message_id):
 from datetime import datetime
 
 
-# 
+# image message endpoint
 @app.route('/image_messages', methods=['POST'])
 def create_image_message():
     # Extract data from the request
@@ -409,21 +436,7 @@ def create_image_message():
     return jsonify({'message': 'Image message created successfully'})
 
 
-
 ## Authentication
-
-# @app.route('/login', methods=['POST'])
-# def login():
-#     email = request.form['email']
-#     password = request.form['password']
-
-#     user = User.query.filter_by(email=email).first()
-#     if user and check_password_hash(user.password, password):
-#         login_user(user)  # Log in the user
-#         return jsonify({'message': 'Login successful'})
-
-#     return jsonify({'message': 'Invalid email or password'}, 401)
-
 @app.route('/login', methods=['POST'])
 def login():
     email = request.form['email']
@@ -485,33 +498,6 @@ def protected_route():
     # This route is only accessible to authenticated users
     return jsonify({'message': 'This is a protected route'})
 
-
-
-
-# @app.route('/send_invitation_email', methods=['POST'])
-# def send_invitation_email():
-#     if request.method == 'POST':
-#         recipient_email = request.json.get('recipient_email')
-#         channel_id = request.json.get('channel_id')
-#         invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept'
-
-#         # Create an email message
-#         subject = 'You are invited to join our group channel'
-#         body = f'Click the following link to join our group channel: {invitation_link}'
-#         sender = 'yusramoham99@gmail.com'  # Replace with your email address
-#         recipients = [recipient_email]
-
-#         msg = Message(subject=subject, sender=sender, recipients=recipients)
-#         msg.body = body
-
-#         try:
-#             mail.send(msg)
-#             return jsonify({'message': 'Invitation email sent successfully'})
-#         except Exception as e:
-#             return jsonify({'message': f'Failed to send the invitation email: {str(e)}'}, 500)
-
-#     return jsonify({'message': 'Invalid request'}, 400)
-
 @app.route('/send_invitation_email', methods=['POST'])
 def send_invitation_email():
     if request.method == 'POST':
@@ -542,66 +528,81 @@ def send_invitation_email():
     return jsonify({'message': 'Invalid request'}, 400)
 
 
-# # Add this route to your application
-# @app.route('/accept_invitation/<token>', methods=['GET'])
-# def accept_invitation(token):
-#     # Find the invitation with the provided token
-#     invitation = Invitation.query.filter_by(token=token).first()
-
-#     if invitation:
-#         # Check if the invitation is not expired (if you have an expiration check)
-#         # Check if the recipient is not already a member of the group
-
-#         # Associate the user with the group channel
-#         user = User.query.filter_by(email=invitation.recipient_email).first()
-#         if user:
-#             group_channel = GroupChannel.query.get(invitation.group_channel_id)
-#             if group_channel:
-#                 user.group_channels.append(group_channel)
-#                 db.session.commit()
-
-#             # You can also delete the invitation if needed
-#             db.session.delete(invitation)
-#             db.session.commit()
-
-#             return redirect(url_for('group_channel_page', channel_id=group_channel.id))
-#         else:
-#             return jsonify({'message': 'User not found'}, 404)
-#     else:
-#         return jsonify({'message': 'Invalid or expired invitation link'}, 400)
 
 
-@app.route('/accept_invitation/<token>', methods=['GET'])
-def accept_invitation(token):
-    print(f"Received invitation token: {token}")  # Debugging statement
+@app.route('/invitations/<int:channel_id>/accept', methods=['GET'])
+def accept_invitation(channel_id):
+    # Extract the token from the URL
+    token = request.args.get('token')
 
-    # Find the invitation with the provided token
-    invitation = Invitation.query.filter_by(token=token).first()
-    if invitation:
-        print(f"Invitation found: {invitation.id}")  # Debugging statement
-
-        # Check if the invitation is not expired (if you have an expiration check)
-        # Debugging statement for expiration check:
-        if invitation.is_expired:
-            print("Invitation is expired")
-            return jsonify({'message': 'Invitation has expired'}, 400)
-
-        # Check if the recipient is not already a member of the group
-        user = User.query.filter_by(email=invitation.recipient_email).first()
-        if user:
-            print(f"User found: {user.id}")  # Debugging statement
-            group_channel = GroupChannel.query.get(invitation.group_channel_id)
-            if group_channel:
-                user.group_channels.append(group_channel)
-                db.session.commit()
-                print(f"User added to group channel: {group_channel.id}")  # Debugging statement
+    # Validate the token
+    if validate_invitation_token(channel_id, token):
+        user_id = get_current_user_id()
+        
+        if user_id:
+            # Add the user to the group channel (you need to implement this)
+            # For example, you can create a new record in your database
+            # to associate the user with the group channel.
+            
+            # Ensure that the user is not already a member of the channel
+            if not is_user_member_of_channel(user_id, channel_id):
+                add_user_to_group_channel(user_id, channel_id)
+                return jsonify({'message': 'Invitation accepted successfully'})
             else:
-                print("Group channel not found")  # Debugging statement
+                return jsonify({'message': 'User is already a member of the channel'}, 400)
         else:
-            print("User not found")  # Debugging statement
-            return jsonify({'message': 'User not found'}, 404)
+            return jsonify({'message': 'Invalid user or not logged in'}, 400)
     else:
-        print("Invalid or expired invitation link")  # Debugging statement
         return jsonify({'message': 'Invalid or expired invitation link'}, 400)
+def validate_invitation_token(channel_id, token):
+    # Retrieve the invitation record from the database based on the provided token
+    invitation = Invitation.query.filter_by(group_channel_id=channel_id, token=token).first()
 
-    return redirect(url_for('group_channel_page', channel_id=group_channel.id))
+    if invitation:
+        # Check if the token is associated with the specified channel
+        if invitation.group_channel_id == channel_id:
+            # Check if the token hasn't expired
+            expiration_time = invitation.created_at + timedelta(days=1)  # Adjust the expiration time as needed
+            if datetime.utcnow() <= expiration_time:
+                return True  # Token is valid
+            else:
+                return False  # Token has expired
+        else:
+            return False  # Token is not associated with the specified channel
+    else:
+        return False  # Token doesn't exist in the database
+    
+
+def get_current_user_id():
+    # function to get the ID of the currently logged-in user
+    # You can use Flask-Login's current_user to get the user object and then access the ID
+    if current_user.is_authenticated:
+        return current_user.id
+    else:
+        return None
+
+def add_user_to_group_channel(user_id, channel_id):
+    # Implement the logic to add the user to the group channel
+    user = User.query.get(user_id)
+    channel = GroupChannel.query.get(channel_id)
+    
+    if user and channel:
+        # Check if the user is not already a member of the channel
+        if user not in channel.members:
+            channel.members.append(user)
+            db.session.commit()
+
+def is_user_member_of_channel(user_id, channel_id):
+    # Check if the user with the given user_id is a member of the channel with the given channel_id
+    user = User.query.get(user_id)
+    channel = GroupChannel.query.get(channel_id)
+
+    if user and channel:
+        # Assuming there's a many-to-many relationship between users and group channels
+        return channel in user.group_channels
+
+    return False
+
+
+
+ 
