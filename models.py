@@ -22,20 +22,26 @@ def generate_unique_token():
 # class User(db.Model):
 #     __tablename__ = 'users'
 #     id = db.Column(db.Integer, primary_key=True)
+#     user_name = db.Column(db.String(100))
 #     first_name = db.Column(db.String(100))
 #     last_name = db.Column(db.String(100))
 #     email = db.Column(db.String(100), unique=True, nullable=False)
 #     password = db.Column(db.String(255), nullable=False)
 #     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 #     verification_token = db.Column(db.String(64), unique=True)
+#     role = db.Column(db.String(20))
+
+
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
+
     id = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(100))  # Add this line to define the user_name column
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime)
     verification_token = db.Column(db.String(64), unique=True)
     role = db.Column(db.String(50))
     # relationships with other tables
@@ -198,11 +204,14 @@ class UserReport(db.Model):
 # invitation table 
 class Invitation(db.Model):
     __tablename__ = 'invitations'
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    recipient_email = db.Column(db.String(100), nullable=False)
-    group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
-    token = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
+    invitation_date = db.Column(db.Date, nullable=False)
+
+
+
+
 
     
