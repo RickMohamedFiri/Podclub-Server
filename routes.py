@@ -404,7 +404,6 @@ def delete_group_chat_message(message_id):
     else:
         return jsonify({'message': 'Message not found or unauthorized to delete'}, 404)
     
-from datetime import datetime
 
 
 # image message endpoint

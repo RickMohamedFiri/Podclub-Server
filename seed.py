@@ -19,8 +19,8 @@ def seed_database():
         # user1 = User(user_name='Aleki', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
         # user2 = User(user_name='Jamex', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
 # Create and add user records
-        user1 = User(first_name='Aleki', last_name='Mill', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
-        user2 = User(first_name='Jamex', last_name='Willy', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
+        user1 = User(user_name='Aleki', first_name='Aleki', last_name='Mill', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
+        user2 = User(user_name='Jamex', first_name='Jamex', last_name='Willy', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
 
         # Add users to the session
         db.session.add_all([user1, user2])
