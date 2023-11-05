@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 3bf65eb25ede
+Revision ID: daf1402ff5eb
 Revises: 
-Create Date: 2023-11-01 14:49:21.402656
+Create Date: 2023-11-05 12:10:52.831716
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3bf65eb25ede'
+revision = 'daf1402ff5eb'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,14 @@ def upgrade():
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('verification_token')
     )
+    op.create_table('admins',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('can_ban_users', sa.Boolean(), nullable=True),
+    sa.Column('can_delete_channels', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('channels',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
@@ -48,6 +56,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('user_reports',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('reporting_user_id', sa.Integer(), nullable=False),
+    sa.Column('reported_user_id', sa.Integer(), nullable=False),
+    sa.Column('reported_content_id', sa.Integer(), nullable=False),
+    sa.Column('report_date', sa.DateTime(), nullable=True),
+    sa.Column('action_taken', sa.String(length=50), nullable=True),
+    sa.ForeignKeyConstraint(['reported_user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['reporting_user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('group_chat_messages',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -62,9 +81,9 @@ def upgrade():
     )
     op.create_table('group_messages',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('channel_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('joined_at', sa.DateTime(), nullable=True),
-    sa.Column('channel_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['channel_id'], ['channels.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -84,12 +103,11 @@ def upgrade():
     sa.Column('sender_id', sa.Integer(), nullable=False),
     sa.Column('recipient_email', sa.String(length=100), nullable=False),
     sa.Column('group_channel_id', sa.Integer(), nullable=False),
-    sa.Column('token', sa.String(length=32), nullable=False),
+    sa.Column('token', sa.String(length=255), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['group_channel_id'], ['group_channels.id'], ),
     sa.ForeignKeyConstraint(['sender_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('token')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('messages',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -140,7 +158,9 @@ def downgrade():
     op.drop_table('image_messages')
     op.drop_table('group_messages')
     op.drop_table('group_chat_messages')
+    op.drop_table('user_reports')
     op.drop_table('group_channels')
     op.drop_table('channels')
+    op.drop_table('admins')
     op.drop_table('users')
     # ### end Alembic commands ###

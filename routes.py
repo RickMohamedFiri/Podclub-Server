@@ -537,13 +537,23 @@ def accept_invitation(channel_id):
 
     # Validate the token
     if validate_invitation_token(channel_id, token):
-        # Perform the necessary action, such as adding the user to the group channel
-        # You might want to create a new record in your database to track the user's membership in the channel
-
-        return jsonify({'message': 'Invitation accepted successfully'})
+        user_id = get_current_user_id()
+        
+        if user_id:
+            # Add the user to the group channel (you need to implement this)
+            # For example, you can create a new record in your database
+            # to associate the user with the group channel.
+            
+            # Ensure that the user is not already a member of the channel
+            if not is_user_member_of_channel(user_id, channel_id):
+                add_user_to_group_channel(user_id, channel_id)
+                return jsonify({'message': 'Invitation accepted successfully'})
+            else:
+                return jsonify({'message': 'User is already a member of the channel'}, 400)
+        else:
+            return jsonify({'message': 'Invalid user or not logged in'}, 400)
     else:
         return jsonify({'message': 'Invalid or expired invitation link'}, 400)
-
 def validate_invitation_token(channel_id, token):
     # Retrieve the invitation record from the database based on the provided token
     invitation = Invitation.query.filter_by(group_channel_id=channel_id, token=token).first()
@@ -561,3 +571,38 @@ def validate_invitation_token(channel_id, token):
             return False  # Token is not associated with the specified channel
     else:
         return False  # Token doesn't exist in the database
+    
+
+def get_current_user_id():
+    # function to get the ID of the currently logged-in user
+    # You can use Flask-Login's current_user to get the user object and then access the ID
+    if current_user.is_authenticated:
+        return current_user.id
+    else:
+        return None
+
+def add_user_to_group_channel(user_id, channel_id):
+    # Implement the logic to add the user to the group channel
+    user = User.query.get(user_id)
+    channel = GroupChannel.query.get(channel_id)
+    
+    if user and channel:
+        # Check if the user is not already a member of the channel
+        if user not in channel.members:
+            channel.members.append(user)
+            db.session.commit()
+
+def is_user_member_of_channel(user_id, channel_id):
+    # Check if the user with the given user_id is a member of the channel with the given channel_id
+    user = User.query.get(user_id)
+    channel = GroupChannel.query.get(channel_id)
+
+    if user and channel:
+        # Assuming there's a many-to-many relationship between users and group channels
+        return channel in user.group_channels
+
+    return False
+
+
+
+ 

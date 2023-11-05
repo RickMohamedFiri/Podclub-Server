@@ -45,6 +45,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     verification_token = db.Column(db.String(64), unique=True)
+    role = db.Column(db.String(50))
     # relationships with other tables
     channels = db.relationship('Channel', backref='user', lazy=True)
     messages = db.relationship('Message', backref='user', lazy=True)
