@@ -13,6 +13,8 @@ Flask-Migrate
 Flask-RESTful
 flask-restx
 Flask-SQLAlchemy==3.0.2
+flask_mail
+flask_login
 greenlet
 gunicorn
 importlib-resources
@@ -25,9 +27,12 @@ packaging
 PyJWT
 pyrsistent
 python-dateutil
+passlib
 pytz
 six
 SQLAlchemy
 SQLAlchemy-serializer
 typing_extensions
 Werkzeug
+marshmallow
+wtforms
