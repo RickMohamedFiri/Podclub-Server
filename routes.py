@@ -404,37 +404,34 @@ def delete_group_chat_message(message_id):
     else:
         return jsonify({'message': 'Message not found or unauthorized to delete'}, 404)
 
-# 
+# image message endpoint
 @app.route('/image_messages', methods=['POST'])
 def create_image_message():
     # Extract data from the request
     data = request.get_json()
-    reporting_user_id = get_jwt_identity()
-    reported_user_id = data.get('reported_user_id')
-    reported_content_id = data.get('reported_content_id')
+    channel_id = data.get('channel_id')
+    user_id = data.get('user_id')
+    image_url = data.get('image_url')
+    message_date_str = data.get('message_date')  # Get the date string
 
-    # Validate the incoming data
-    try:
-        data_schema = DataValidationSchema()
-        validated_data = data_schema.load(data)
-    except ValidationError as err:
-        return jsonify({"message": "Validation error", "error": err.messages}), 400
+    # Convert the date string to a datetime object
+    message_date = datetime.strptime(message_date_str, '%Y-%m-%d %H:%M:%S.%f')
 
-    # Additional validation
-    if reporting_user_id == reported_user_id:
-        return jsonify({"message": "You cannot report yourself"}), 400
+    # Create an ImageMessage object
+    new_image_message = ImageMessage(
+        channel_id=channel_id,
+        user_id=user_id,
+        image_url=image_url,
+        message_date=message_date  # Use the datetime object
+    )
 
-    # Check if the reported user and content exist in your database
-    reported_user = User.query.get(reported_user_id)
-    if not reported_user:
-        return jsonify({"message": "Reported user does not exist"}), 404
+    # Add the image message to the database
+    db.session.add(new_image_message)
+    db.session.commit()
 
-    # Check if the reported content exists
-    reported_content = ReportedMessage.query.get(reported_content_id)
-    if not reported_content:
-        return jsonify({"message": "Reported content does not exist"}), 404
+    # Return a JSON response
+    return jsonify({'message': 'Image message created successfully'})
 
-    return jsonify({"message": "Abuse reported successfully"}), 201
 
 ## Authentication
 @app.route('/login', methods=['POST'])

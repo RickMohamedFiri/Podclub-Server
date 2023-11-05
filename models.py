@@ -1,5 +1,3 @@
-
-
 # models.py
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -17,12 +15,6 @@ db = SQLAlchemy()
 
 def generate_unique_token():
     token = secrets.token_hex(16)
-    return token
-#classes tables 
-
-
-def generate_unique_token():
-    token = secrets.token_hex(16)  # You can adjust the token length as needed
     return token
 
 #uses class table
@@ -53,14 +45,10 @@ class User(db.Model, UserMixin):
     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
     group_chat_messages = db.relationship('GroupChatMessage', back_populates='user', lazy=True)
     image_messages = relationship('ImageMessage', back_populates='user')
-    # invitations = relationship('Invitation', back_populates='user')
-
-
- # Add a new field to track the number of group channels created by the user.
+    # Add a new field to track the number of group channels created by the user.
     # group_channels_count = db.Column(db.Integer, default=0)
 
-
-   # Flask-Login UserMixin properties and methods
+# Flask-Login UserMixin properties and methods
     def get_id(self):
         return str(self.id)
 
@@ -75,22 +63,6 @@ class User(db.Model, UserMixin):
     @property
     def is_anonymous(self):
         return False
-
-
-
-    #  #email and password validations 
-    # @validates('email')
-    # def validate_email(self, key, email):
-    #     if '@' not in email:
-    #         raise ValueError('Invalid email format. Must contain "@"')
-    #     return email
-    
-    # @validates('password')
-    # def validate_password(self, key, password):
-    #     if len(password) < 6:
-    #         raise ValueError("Password must be at least 6 characters long.")
-    #     return password
-
 # Add a function to validate and hash passwords
 def validate_and_hash_password(form, field):
     if len(field.data) < 6:
@@ -109,6 +81,7 @@ def validate_password(self, key, password):
     if len(password) < 6:
         raise ValueError("Password must be at least 6 characters long.")
     return validate_and_hash_password(None, password)
+
 #channels table 
 class Channel(db.Model):
     __tablename__ = 'channels'
@@ -178,18 +151,14 @@ class GroupChatMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     message_date = db.Column(db.DateTime, default=datetime.utcnow)
     parent_message_id = db.Column(db.Integer, db.ForeignKey('group_chat_messages.id'))
-    # reported_messages = db.relationship('ReportedMessage', backref='group_message', foreign_keys='ReportedMessage.message_id', lazy=True)
+    # Define the relationships
     reported_messages = db.relationship('ReportedMessage', backref='group_message_relationship',  foreign_keys='ReportedMessage.message_id', primaryjoin='GroupChatMessage.id == ReportedMessage.message_id', lazy=True)
-    # Define the relationship between GroupChatMessage and User (author)
     user = db.relationship('User', back_populates='messages')
-    # Define the relationship between GroupChatMessage and GroupChannel
     channel = db.relationship('GroupChannel', back_populates='messages')
     user = db.relationship('User', back_populates='group_chat_messages')
     content = db.Column(db.String(255))
 
-
-
-#  image messages
+# image messages table
 class ImageMessage(db.Model):
     __tablename__ = 'image_messages'
     id = db.Column(db.Integer, primary_key=True)
@@ -197,16 +166,12 @@ class ImageMessage(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     image_url = db.Column(db.String(255), nullable=False)
     message_date = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Define the relationship between ImageMessage and User (author)
+    # Define the relationships
     user = db.relationship('User', back_populates='image_messages')
-    # Define the relationship between ImageMessage and GroupChannel
     channel = db.relationship('GroupChannel', back_populates='image_messages')
+    GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
 
-# Add a relationship between GroupChannel and ImageMessage
-GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
-
-    # Define the Admin model with permissions
+# Define the Admin model with permissions
 class Admin(db.Model):
     __tablename__ = 'admins'
     id = db.Column(db.Integer, primary_key=True)
@@ -214,7 +179,7 @@ class Admin(db.Model):
     can_ban_users = db.Column(db.Boolean, default=False)
     can_delete_channels = db.Column(db.Boolean, default=False)
 
-    #user reports table 
+#user reports table 
 class UserReport(db.Model):
     __tablename__ = 'user_reports'
     id = db.Column(db.Integer, primary_key=True)
@@ -230,6 +195,7 @@ class UserReport(db.Model):
         self.reported_content_id = reported_content_id
         self.action_taken = action_taken
 
+# invitation table 
 class Invitation(db.Model):
     __tablename__ = 'invitations'
     id = db.Column(db.Integer, primary_key=True)
