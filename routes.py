@@ -312,6 +312,27 @@ def create_group_channel():
 
     return jsonify({'message': 'Group channel created successfully'})
 
+# GET endpoint to fetch group channels
+@app.route('/group_channels', methods=['GET'])
+def get_group_channels():
+    # Retrieve group channels from the database (you need to implement this)
+    group_channels = GroupChannel.query.all()  # You need to define the GroupChannel model and query accordingly
+
+    # Create a list to store group channel data
+    group_channel_list = []
+
+    # Convert group channels to a list of dictionaries
+    for group_channel in group_channels:
+        group_channel_data = {
+            'user_id': group_channel.user_id,
+            'channel_name': group_channel.channel_name,
+            'description': group_channel.description,
+        }
+        group_channel_list.append(group_channel_data)
+
+    # Return the list of group channels as a JSON response
+    return jsonify(group_channel_list)
+
 # Update Group Channel Description endpoin
 @app.route('/group_channels/<int:channel_id>', methods=['PATCH'])
 def update_group_channel_description(channel_id):
@@ -355,6 +376,27 @@ def add_message_to_group_chat():
     db.session.commit()
 
     return jsonify({'message': 'Message added to the group chat'})
+
+# GET endpoint to fetch group chat messages
+@app.route('/group_chat_messages', methods=['GET'])
+def get_group_chat_messages():
+    # Retrieve group chat messages from the database (you need to implement this)
+    group_chat_messages = GroupChatMessage.query.all()  # You need to define the GroupChatMessage model and query accordingly
+
+    # Create a list to store group chat message data
+    group_chat_message_list = []
+
+    # Convert group chat messages to a list of dictionaries
+    for group_chat_message in group_chat_messages:
+        group_chat_message_data = {
+            'channel_id': group_chat_message.channel_id,
+            'user_id': group_chat_message.user_id,
+            'message_content': group_chat_message.content,
+        }
+        group_chat_message_list.append(group_chat_message_data)
+
+    # Return the list of group chat messages as a JSON response
+    return jsonify(group_chat_message_list)
 
 # Reply to Message in group chat enpoint
 @app.route('/group_chat_messages/<int:message_id>/reply', methods=['POST'])
@@ -434,6 +476,28 @@ def create_image_message():
     # Return a JSON response
     return jsonify({'message': 'Image message created successfully'})
 
+
+# GET endpoint to fetch image messages
+@app.route('/image_messages', methods=['GET'])
+def get_image_messages():
+    # Retrieve image messages from the database (you need to implement this)
+    image_messages = ImageMessage.query.all()  # You need to define the ImageMessage model and query accordingly
+
+    # Create a list to store image message data
+    image_message_list = []
+
+    # Convert image messages to a list of dictionaries
+    for image_message in image_messages:
+        image_message_data = {
+            'channel_id': image_message.channel_id,
+            'user_id': image_message.user_id,
+            'image_url': image_message.image_url,
+            'message_date': image_message.message_date.strftime('%Y-%m-%d %H:%M:%S.%f')
+        }
+        image_message_list.append(image_message_data)
+
+    # Return the list of image messages as a JSON response
+    return jsonify(image_message_list)
 
 ## Authentication
 @app.route('/login', methods=['POST'])
