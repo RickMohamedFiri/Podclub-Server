@@ -32,12 +32,18 @@ def load_user(user_id):
 
 
 app.config.from_object(Config)
+app.config['SQLALCHEMYDATABASE_URL']=os.environ.get('DATABASE_URL')
+# app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
+
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
 
 jwt = JWTManager(app)
 
+# Configure JWT settings 
+app.config['JWT_SECRET_KEY'] = 'secret_key'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
 
 # Configure Flask-Mail for sending email notifications
 mail = Mail(app)
@@ -57,7 +63,7 @@ print(secret_key)
 from routes import *
 
 
+
 if __name__ == '__main__':
     db.create_all()
     app.run(debug=True)
-
