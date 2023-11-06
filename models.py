@@ -1,5 +1,3 @@
-
-
 # models.py
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -17,12 +15,6 @@ db = SQLAlchemy()
 
 def generate_unique_token():
     token = secrets.token_hex(16)
-    return token
-#classes tables 
-
-
-def generate_unique_token():
-    token = secrets.token_hex(16)  # You can adjust the token length as needed
     return token
 
 #uses class table
@@ -51,22 +43,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime)
     verification_token = db.Column(db.String(64), unique=True)
-    role = db.Column(db.String(20))
-    
-    # Add other columns as needed
-
-
-
-    def __init__(self,user_name, email, password, verification_token, role):
-        self.user_name = user_name
-        self.email = email
-        self.password = password 
-        self.verification_token = verification_token
-        self.role = role
-
-    def __repr__(self):
-        return f"<User(id={self.id}, email={self.email}, role={self.role})>"
-
+    role = db.Column(db.String(50))
     # relationships with other tables
     channels = db.relationship('Channel', backref='user', lazy=True)
     messages = db.relationship('Message', backref='user', lazy=True)
@@ -74,14 +51,10 @@ class User(db.Model, UserMixin):
     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
     group_chat_messages = db.relationship('GroupChatMessage', back_populates='user', lazy=True)
     image_messages = relationship('ImageMessage', back_populates='user')
-    # invitations = relationship('Invitation', back_populates='user')
-
-
- # Add a new field to track the number of group channels created by the user.
+    # Add a new field to track the number of group channels created by the user.
     # group_channels_count = db.Column(db.Integer, default=0)
 
-
-   # Flask-Login UserMixin properties and methods
+# Flask-Login UserMixin properties and methods
     def get_id(self):
         return str(self.id)
 
@@ -96,22 +69,6 @@ class User(db.Model, UserMixin):
     @property
     def is_anonymous(self):
         return False
-
-
-
-    #  #email and password validations 
-    # @validates('email')
-    # def validate_email(self, key, email):
-    #     if '@' not in email:
-    #         raise ValueError('Invalid email format. Must contain "@"')
-    #     return email
-    
-    # @validates('password')
-    # def validate_password(self, key, password):
-    #     if len(password) < 6:
-    #         raise ValueError("Password must be at least 6 characters long.")
-    #     return password
-
 # Add a function to validate and hash passwords
 def validate_and_hash_password(form, field):
     if len(field.data) < 6:
@@ -130,6 +87,7 @@ def validate_password(self, key, password):
     if len(password) < 6:
         raise ValueError("Password must be at least 6 characters long.")
     return validate_and_hash_password(None, password)
+
 #channels table 
 class Channel(db.Model):
     __tablename__ = 'channels'
@@ -181,18 +139,45 @@ class ReportedMessage(db.Model):
     is_banned = db.Column(db.Boolean, nullable=False)
     __table_args__ = (db.ForeignKeyConstraint([reporting_user_id], ['users.id']),)
     
-    
-#inivitations table 
-# class Invitation(db.Model):
-#     __tablename__ = 'invitations'
-#     id = db.Column(db.Integer, primary_key=True, nullable=False)
-#     sender_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-#     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
-#     invitation_date = db.Column(db.Date, nullable=False)
+class GroupChannel(db.Model):
+    __tablename__ = 'group_channels'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    channel_name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    messages = db.relationship('GroupChatMessage', backref='group_channel', lazy=True)
 
+# Define the GroupChatMessage model
+class GroupChatMessage(db.Model):
+    __tablename__ = 'group_chat_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    message_date = db.Column(db.DateTime, default=datetime.utcnow)
+    parent_message_id = db.Column(db.Integer, db.ForeignKey('group_chat_messages.id'))
+    # Define the relationships
+    reported_messages = db.relationship('ReportedMessage', backref='group_message_relationship',  foreign_keys='ReportedMessage.message_id', primaryjoin='GroupChatMessage.id == ReportedMessage.message_id', lazy=True)
+    user = db.relationship('User', back_populates='messages')
+    channel = db.relationship('GroupChannel', back_populates='messages')
+    user = db.relationship('User', back_populates='group_chat_messages')
+    content = db.Column(db.String(255))
 
-    # Define the Admin model with permissions
+# image messages table
+class ImageMessage(db.Model):
+    __tablename__ = 'image_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    image_url = db.Column(db.String(255), nullable=False)
+    message_date = db.Column(db.DateTime, default=datetime.utcnow)
+    # Define the relationships
+    user = db.relationship('User', back_populates='image_messages')
+    channel = db.relationship('GroupChannel', back_populates='image_messages')
+    GroupChannel.image_messages = db.relationship('ImageMessage', back_populates='channel')
+
+# Define the Admin model with permissions
 class Admin(db.Model):
     __tablename__ = 'admins'
     id = db.Column(db.Integer, primary_key=True)
@@ -200,7 +185,7 @@ class Admin(db.Model):
     can_ban_users = db.Column(db.Boolean, default=False)
     can_delete_channels = db.Column(db.Boolean, default=False)
 
-    #user reports table 
+#user reports table 
 class UserReport(db.Model):
     __tablename__ = 'user_reports'
     id = db.Column(db.Integer, primary_key=True)
@@ -216,6 +201,7 @@ class UserReport(db.Model):
         self.reported_content_id = reported_content_id
         self.action_taken = action_taken
 
+# invitation table 
 class Invitation(db.Model):
     __tablename__ = 'invitations'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -227,11 +213,5 @@ class Invitation(db.Model):
 
 
 
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    recipient_email = db.Column(db.String(100), nullable=False)
-    group_channel_id = db.Column(db.Integer, db.ForeignKey('group_channels.id'), nullable=False)
-    token = db.Column(db.String(32), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     
