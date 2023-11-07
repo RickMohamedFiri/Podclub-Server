@@ -157,7 +157,7 @@ def update_message(message_id):
 # Delete Message endpoint
 @app.route('/messages/<int:message_id>', methods=['DELETE'])
 def delete_message(message_id):
-    message = Message.query.get(message_id)
+    message = Messages.query.get(message_id)
     if message:
         db.session.delete(message)
         db.session.commit()
