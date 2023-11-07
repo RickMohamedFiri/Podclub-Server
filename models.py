@@ -124,7 +124,7 @@ class ReportedUser(db.Model):
     reporting_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     message_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=False)
-    report_date = db.Column(db.DateTime, nullable=False)
+    report_date = db.Column(db.DateTime, default=db.func.current_timestamp(), nullable=True)
     is_banned = db.Column(db.Boolean, nullable=False)
     
 #reported_messages table 

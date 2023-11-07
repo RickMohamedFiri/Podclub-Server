@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager
 from app import app, db, mail 
 from flask_cors import CORS
 import secrets
+from datetime import datetime
 from datetime import timedelta
 from flask_jwt_extended import JWTManager,jwt_required, get_jwt_identity
 from marshmallow import ValidationError
@@ -207,7 +208,13 @@ def delete_group_message(group_message_id):
 # ReportedUser endpoint
 @app.route('/reported_users', methods=['POST'])
 def create_reported_user():
-    new_reported_user = ReportedUser(reporting_user_id=request.json['reporting_user_id'], reported_user_id=request.json['reported_user_id'], message_id=request.json['message_id'], is_banned=request.json['is_banned'])
+    new_reported_user = ReportedUser(
+        reporting_user_id=request.json['reporting_user_id'],
+        reported_user_id=request.json['reported_user_id'],
+        message_id=request.json['message_id'],
+        is_banned=request.json['is_banned'],
+        report_date=None  # Set report_date to None
+    )
     db.session.add(new_reported_user)
     db.session.commit()
     return jsonify({'message': 'Reported user created successfully'})
@@ -696,13 +703,17 @@ def get_reported_messages():
 @app.route('/reported_messages', methods=['POST'])
 def create_reported_message():
     data = request.get_json()
+    report_date_str = data['report_date']  # Assuming report_date is provided as a string
+    report_date = datetime.strptime(report_date_str, '%Y-%m-%d %H:%M:%S')  # Convert the string to datetime
+
     new_reported_message = ReportedMessage(
         reporting_user_id=data['reporting_user_id'],
         user_id=data['user_id'],
         message_id=data['message_id'],
-        report_date=data['report_date'],
+        report_date=report_date,  # Use the datetime object here
         is_banned=data['is_banned']
     )
+
     db.session.add(new_reported_message)
     db.session.commit()
     return jsonify({'message': 'Reported message created successfully!'})
