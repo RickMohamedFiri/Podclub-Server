@@ -10,7 +10,6 @@ from sqlalchemy import ForeignKey
 
 
 
-
 db = SQLAlchemy()
 
 def generate_unique_token():
@@ -46,7 +45,7 @@ class User(db.Model, UserMixin):
     role = db.Column(db.String(50))
     # relationships with other tables
     channels = db.relationship('Channel', backref='user', lazy=True)
-    messages = db.relationship('Message', backref='user', lazy=True)
+    messages = db.relationship('Messages', backref='user', lazy=True)
     reported_users = db.relationship('ReportedUser', backref='reporting_user', foreign_keys='ReportedUser.reporting_user_id', lazy=True)
     reported_messages = db.relationship('ReportedMessage', backref='reporting_user', primaryjoin='User.id == ReportedMessage.user_id', lazy=True)
     group_chat_messages = db.relationship('GroupChatMessage', back_populates='user', lazy=True)
@@ -96,11 +95,11 @@ class Channel(db.Model):
     description = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    messages = db.relationship('Message', backref='channel', lazy=True)
+    messages = db.relationship('Messages', backref='channel', lazy=True)
     group_messages = db.relationship('GroupMessage', backref='channel', lazy=True)
 
 #messsage table 
-class Message(db.Model):
+class Messages(db.Model):
     __tablename__ = 'messages'
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.Text, nullable=False)

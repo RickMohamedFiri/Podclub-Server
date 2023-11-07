@@ -9,7 +9,7 @@ from flask_jwt_extended import JWTManager,jwt_required, get_jwt_identity
 from marshmallow import ValidationError
 from validation import DataValidationSchema
 from passlib.hash import sha256_crypt
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation,UserReport
+from models import User, Channel, Messages, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage, ImageMessage, Invitation
 from datetime import datetime
 from flask_mail import Message, Mail
 from flask_jwt_extended import create_access_token, jwt_required
@@ -25,7 +25,7 @@ CORS(app)
 def message():
     return 'Welcome to the channels API'
 
-# Create User endpoint
+# Create User endpoint and update user
 @app.route('/users', methods=['POST', 'PUT'])
 def create_or_update_user():
     if request.method == 'POST':
@@ -70,31 +70,31 @@ def get_all_users():
     users = User.query.all()
     user_list = [{'id': user.id, 'user_name': user.user_name, 'email': user.email} for user in users]
     return jsonify(user_list)
-# Update User endpoint
-@app.route('/users/<int:user_id>', methods=['PATCH'])
-@jwt_required
-def update_user(user_id):
-    current_user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+# # Update User endpoint
+# @app.route('/users/<int:user_id>', methods=['PATCH'])
+# @jwt_required
+# def update_user(user_id):
+#     current_user_id = get_jwt_identity()
+#     user = User.query.get(user_id)
 
-    if not user:
-        return jsonify({'message': 'User not found'}), 404
+#     if not user:
+#         return jsonify({'message': 'User not found'}), 404
 
-    if user.id != current_user_id:
-        return jsonify({'message': 'You can only update your own user profile'}), 403
+#     if user.id != current_user_id:
+#         return jsonify({'message': 'You can only update your own user profile'}), 403
 
-    data = request.get_json()
-    new_user_name = data.get('user_name')
-    new_password = data.get('password')
+#     data = request.get_json()
+#     new_user_name = data.get('user_name')
+#     new_password = data.get('password')
 
-    if new_user_name:
-        user.user_name = new_user_name
+#     if new_user_name:
+#         user.user_name = new_user_name
 
-    if new_password:
-        user.password = sha256_crypt(salt=b"your_salt").hash(new_password)
+#     if new_password:
+#         user.password = sha256_crypt(salt=b"your_salt").hash(new_password)
 
-    db.session.commit()
-    return jsonify({'message': 'User profile updated successfully'})
+#     db.session.commit()
+#     return jsonify({'message': 'User profile updated successfully'})
 
 
 # Create Channel endpoint
@@ -128,7 +128,7 @@ def update_channel(channel_id):
 # Message endpoint
 @app.route('/messages', methods=['POST'])
 def create_message():
-    new_message = Message(message=request.json['message'], user_id=request.json['user_id'], channel_id=request.json['channel_id'])
+    new_message = Messages(message=request.json['message'], user_id=request.json['user_id'], channel_id=request.json['channel_id'])
     db.session.add(new_message)
     db.session.commit()
     return jsonify({'message': 'Message created successfully'})
@@ -136,14 +136,14 @@ def create_message():
 #  All Messages endpoint
 @app.route('/messages', methods=['GET'])
 def get_all_messages():
-    messages = Message.query.all()
+    messages = Messages.query.all()
     message_list = [{'id': message.id, 'message': message.message, 'user_id': message.user_id, 'channel_id': message.channel_id} for message in messages]
     return jsonify(message_list)
 
 # Update Message endpoint
 @app.route('/messages/<int:message_id>', methods=['PATCH'])
 def update_message(message_id):
-    message = Message.query.get(message_id)
+    message = Messages.query.get(message_id)
     if message:
         message.message = request.json.get('message', message.message)
         message.user_id = request.json.get('user_id', message.user_id)
@@ -156,13 +156,14 @@ def update_message(message_id):
 # Delete Message endpoint
 @app.route('/messages/<int:message_id>', methods=['DELETE'])
 def delete_message(message_id):
-    message = Message.query.get(message_id)
+    message = Messages.query.get(message_id)
     if message:
         db.session.delete(message)
         db.session.commit()
         return jsonify({'message': 'Message deleted successfully'})
     else:
         return jsonify({'message': 'Message not found'}, 404)
+
 
 # Create GroupMessage endpoint
 @app.route('/group_messages', methods=['POST'])
@@ -499,11 +500,14 @@ def get_image_messages():
     # Return the list of image messages as a JSON response
     return jsonify(image_message_list)
 
-## Authentication
+
+# Authentication
 @app.route('/login', methods=['POST'])
 def login():
-    email = request.form['email']
-    password = request.form['password']
+    data = request.get_json()  # Get JSON data from the request
+
+    email = data.get('email')  # Use .get() to avoid KeyError if the key is not present
+    password = data.get('password')
 
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password, password):
@@ -517,6 +521,7 @@ def login():
         return jsonify({'access_token': access_token, 'message': 'Login successful'})
 
     return jsonify({'message': 'Invalid email or password'}, 401)
+
 
 
 @app.route('/signup', methods=['POST'])
@@ -667,5 +672,48 @@ def is_user_member_of_channel(user_id, channel_id):
     return False
 
 
+##reported messages endpoints 
 
- 
+
+
+# Get Reported Messages
+@app.route('/reported_messages', methods=['GET'])
+def get_reported_messages():
+    reported_messages = ReportedMessage.query.all()
+    reported_messages_list = []
+    for reported_message in reported_messages:
+        reported_messages_list.append({
+            'id': reported_message.id,
+            'reporting_user_id': reported_message.reporting_user_id,
+            'user_id': reported_message.user_id,
+            'message_id': reported_message.message_id,
+            'report_date': reported_message.report_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'is_banned': reported_message.is_banned
+        })
+    return jsonify(reported_messages_list)
+
+# Create a New Reported Message
+@app.route('/reported_messages', methods=['POST'])
+def create_reported_message():
+    data = request.get_json()
+    new_reported_message = ReportedMessage(
+        reporting_user_id=data['reporting_user_id'],
+        user_id=data['user_id'],
+        message_id=data['message_id'],
+        report_date=data['report_date'],
+        is_banned=data['is_banned']
+    )
+    db.session.add(new_reported_message)
+    db.session.commit()
+    return jsonify({'message': 'Reported message created successfully!'})
+
+# Delete a Reported Message
+@app.route('/reported_messages/<int:id>', methods=['DELETE'])
+def delete_reported_message(id):
+    reported_message = ReportedMessage.query.get(id)
+    if reported_message:
+        db.session.delete(reported_message)
+        db.session.commit()
+        return jsonify({'message': 'Reported message deleted successfully'})
+    else:
+        return jsonify({'message': 'Reported message not found'})

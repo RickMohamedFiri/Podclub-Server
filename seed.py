@@ -2,7 +2,7 @@
 import secrets
 import string
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin,UserReport
+from models import User, Channel, Messages, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin,UserReport
 from datetime import datetime
 
 def seed_database():
@@ -35,8 +35,8 @@ def seed_database():
         db.session.commit()
 
         # Create and add message records
-        message1 = Message(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
-        message2 = Message(message='Hi there!', user_id=user2.id, channel_id=channel1.id)
+        message1 = Messages(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
+        message2 = Messages(message='Hi there!', user_id=user2.id, channel_id=channel1.id)
 
         # Add messages to the session
         db.session.add_all([message1, message2])
