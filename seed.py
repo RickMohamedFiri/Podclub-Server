@@ -1,15 +1,26 @@
 # seed.py
+import secrets
+import string
 from app import app, db
-from models import User, Channel, Message, GroupMessage, ReportedUser, ReportedMessage, GroupChannel, GroupChatMessage
+from models import User, Channel, Messages, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin,UserReport
+from datetime import datetime
 
 def seed_database():
     with app.app_context():
         # Create the database tables
         db.create_all()
 
-        # Create and add user records
-        user1 = User(first_name='Aleki', last_name='Alex', email='alexi@gmail.com', password='wordpass')
-        user2 = User(first_name='Jamex', last_name='Xemas', email='jamex@gmail.com', password='jamojam')
+        # Function to generate a secure verification token
+        def generate_verification_token(token_length=10):
+            alphabet = string.ascii_letters + string.digits  # Use letters and numbers
+            return ''.join(secrets.choice(alphabet) for _ in range(token_length))
+
+        # # Create and add user records
+        # user1 = User(user_name='Aleki', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
+        # user2 = User(user_name='Jamex', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
+# Create and add user records
+        user1 = User(user_name='Aleki', first_name='Aleki', last_name='Mill', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
+        user2 = User(user_name='Jamex', first_name='Jamex', last_name='Willy', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
 
         # Add users to the session
         db.session.add_all([user1, user2])
@@ -24,8 +35,8 @@ def seed_database():
         db.session.commit()
 
         # Create and add message records
-        message1 = Message(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
-        message2 = Message(message='Hi there!', user_id=user2.id, channel_id=channel1.id)
+        message1 = Messages(message='Hello, world!', user_id=user1.id, channel_id=channel1.id)
+        message2 = Messages(message='Hi there!', user_id=user2.id, channel_id=channel1.id)
 
         # Add messages to the session
         db.session.add_all([message1, message2])
@@ -40,43 +51,56 @@ def seed_database():
         db.session.commit()
 
         # Create and add reported user records
-        reported_user1 = ReportedUser(reporting_user_id=user1.id, reported_user_id=user2.id, message_id=message1.id)
-        reported_user2 = ReportedUser(reporting_user_id=user2.id, reported_user_id=user1.id, message_id=message2.id)
+        reported_user1 = ReportedUser(reporting_user_id=user1.id, reported_user_id=user2.id, message_id=message1.id, report_date=datetime.now(), is_banned=True)
+        reported_user2 = ReportedUser(reporting_user_id=user2.id, reported_user_id=user1.id, message_id=message2.id, report_date=datetime.now(), is_banned=True)
 
         # Add reported users to the session
         db.session.add_all([reported_user1, reported_user2])
         db.session.commit()
 
         # Create and add reported message records
-        reported_message1 = ReportedMessage(reporting_user_id=user1.id, user_id=user2.id, message_id=message1.id)
-        reported_message2 = ReportedMessage(reporting_user_id=user2.id, user_id=user1.id, message_id=message2.id)
+        reported_message1 = ReportedMessage(reporting_user_id=user1.id, user_id=user2.id, message_id=message1.id, report_date=datetime.now(),is_banned= True)  # Provide a valid report_date
+        reported_message2 = ReportedMessage(reporting_user_id=user2.id, user_id=user1.id, message_id=message2.id, report_date=datetime.now(),is_banned=True)  # Provide a valid report_date
 
         # Add reported messages to the session
         db.session.add_all([reported_message1, reported_message2])
         db.session.commit()
 
+        # Create and add invitation records with current date
+        invitation1 = Invitation(
+            sender_user_id=user1.id,
+            receiver_user_id=user2.id,
+            channel_id=channel1.id,
+            invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
+        )
+        invitation2 = Invitation(
+            sender_user_id=user2.id,
+            receiver_user_id=user1.id,
+            channel_id=channel2.id,
+            invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
+        )
 
-        
-
-        # Create and add group channel records
-        group_channel1 = GroupChannel(user_id=user1.id, channel_name='Group Channel 1', description='Group Chat 1')
-        group_channel2 = GroupChannel(user_id=user2.id, channel_name='Group Channel 2', description='Group Chat 2')
-
-        # Add group channels to the session
-        db.session.add_all([group_channel1, group_channel2])
+        # Add invitations to the session
+        db.session.add_all([invitation1, invitation2])
         db.session.commit()
 
-        # Create and add group message records
-        group_message3 = GroupChatMessage(channel_id=group_channel1.id, user_id=user1.id, content='Hello from Group Chat 1!')
-        group_message4 = GroupChatMessage(channel_id=group_channel2.id, user_id=user2.id, content='Hi from Group Chat 2!')
+        # Create and add UserReport records
+        user_report1 = UserReport(reporting_user_id=user1.id, reported_user_id=user2.id, reported_content_id=101, action_taken='No action taken')
+        user_report2 = UserReport(reporting_user_id=user2.id, reported_user_id=user1.id, reported_content_id=102, action_taken='Warning issued')
 
-        # Add group messages to the session
-        db.session.add_all([group_message3, group_message4])
+        # Add UserReport instances to the session
+        db.session.add_all([user_report1, user_report2])
+        db.session.commit()
+        # Create and add admin records
+        admin1 = Admin(user_id=user1.id, can_ban_users=True, can_delete_channels=True)
+        admin2 = Admin(user_id=user2.id, can_ban_users=True, can_delete_channels=False)
+
+        # Add admins to the session
+        db.session.add_all([admin1, admin2])
         db.session.commit()
 
+       
 
-        
 
 if __name__ == '__main__':
     seed_database()
-
