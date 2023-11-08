@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 4caccd226fe0
+Revision ID: 851695f9139a
 Revises: 
-Create Date: 2023-11-06 15:42:06.592784
+Create Date: 2023-11-08 16:13:46.525683
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4caccd226fe0'
+revision = '851695f9139a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,8 +21,6 @@ def upgrade():
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_name', sa.String(length=100), nullable=True),
-    sa.Column('first_name', sa.String(length=100), nullable=True),
-    sa.Column('last_name', sa.String(length=100), nullable=True),
     sa.Column('email', sa.String(length=100), nullable=False),
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -56,17 +54,6 @@ def upgrade():
     sa.Column('description', sa.String(length=255), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user_reports',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('reporting_user_id', sa.Integer(), nullable=False),
-    sa.Column('reported_user_id', sa.Integer(), nullable=False),
-    sa.Column('reported_content_id', sa.Integer(), nullable=False),
-    sa.Column('report_date', sa.DateTime(), nullable=True),
-    sa.Column('action_taken', sa.String(length=50), nullable=True),
-    sa.ForeignKeyConstraint(['reported_user_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['reporting_user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('group_chat_messages',
@@ -141,7 +128,7 @@ def upgrade():
     sa.Column('reporting_user_id', sa.Integer(), nullable=False),
     sa.Column('reported_user_id', sa.Integer(), nullable=False),
     sa.Column('message_id', sa.Integer(), nullable=False),
-    sa.Column('report_date', sa.DateTime(), nullable=False),
+    sa.Column('report_date', sa.DateTime(), nullable=True),
     sa.Column('is_banned', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['message_id'], ['messages.id'], ),
     sa.ForeignKeyConstraint(['reported_user_id'], ['users.id'], ),
@@ -160,7 +147,6 @@ def downgrade():
     op.drop_table('image_messages')
     op.drop_table('group_messages')
     op.drop_table('group_chat_messages')
-    op.drop_table('user_reports')
     op.drop_table('group_channels')
     op.drop_table('channels')
     op.drop_table('admins')
