@@ -26,76 +26,107 @@ CORS(app)
 def message():
     return 'Welcome to the channels API'
 
-# Create User endpoint and update user
-@app.route('/users', methods=['POST', 'PUT'])
-def create_or_update_user():
-    if request.method == 'POST':
-        new_user = User(
-            user_name=request.json.get('user_name'),
-            email=request.json.get('email'),
-            password=request.json.get('password')
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({'message': 'User created successfully'})
-    elif request.method == 'PUT':
-        # Handle PUT request logic 
-        return jsonify({'message': 'User data updated successfully'})
-    return 'welcome to the channels api'
 
+## Authentication
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()  # Get JSON data from the request
 
-# Create User endpoint
-@app.route('/users', methods=['POST'])
-def create_user():
+    email = data.get('email')  # Use .get() to avoid KeyError if the key is not present
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password, password):
+        # Generate an access token
+        access_token = create_access_token(identity=user.id)  # Use the user's ID as the identity
+
+        # Log in the user
+        login_user(user)
+
+        # Include the access token in the response
+        return jsonify({'access_token': access_token, 'message': 'Login successful'})
+
+    return jsonify({'message': 'Invalid email or password'}, 401)
+
+@app.route('/signup', methods=['POST'])
+def signup():
     data = request.get_json()
+
+    # Extract user registration data from the JSON data
     user_name = data.get('user_name')
     email = data.get('email')
     password = data.get('password')
 
-    if not user_name or not email or not password:
-        return jsonify({'message': 'Please provide user_name, email, and password'}), 400
-
-    existing_user = User.query.filter_by(user_name=user_name).first()
-
+    # Check if the email is not already in use
+    existing_user = User.query.filter_by(email=email).first()
     if existing_user:
-        return jsonify({'message': 'Username already exists'}), 400
+        return jsonify({'message': 'Email already in use'}, 409)
 
-    hashed_password = sha256_crypt.hash(password)
-    new_user = User(user_name=user_name, email=email, password=hashed_password)
+    # Create a new user with the hashed password
+    new_user = User(
+        user_name=user_name,
+        email=email,
+        password=generate_password_hash(password, method='pbkdf2:sha256')
+    )
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({'message': 'User created successfully'}), 201
+
+    # Log in the newly registered user
+    login_user(new_user)
+
+    return jsonify({'message': 'User registered and logged in'})
+
+@app.route('/logout', methods=['GET'])
+@login_required
+def logout():
+    logout_user()  # Log out the user
+    return jsonify({'message': 'Logged out successfully'})
+
+@app.route('/protected_route', methods=['GET'])
+@login_required
+def protected_route():
+    # This route is only accessible to authenticated users
+    return jsonify({'message': 'This is a protected route'})
+
 # Get all Users endpoint
 @app.route('/users', methods=['GET'])
 def get_all_users():
     users = User.query.all()
     user_list = [{'id': user.id, 'user_name': user.user_name, 'email': user.email} for user in users]
     return jsonify(user_list)
-# # Update User endpoint
-# @app.route('/users/<int:user_id>', methods=['PATCH'])
-# @jwt_required
-# def update_user(user_id):
-#     current_user_id = get_jwt_identity()
-#     user = User.query.get(user_id)
 
-#     if not user:
-#         return jsonify({'message': 'User not found'}), 404
+# update user 
+@app.route('/update_user', methods=['PUT'])
+@jwt_required()
+def update_user():
+    # Get the user's ID from the JWT token
+    current_user_id = get_jwt_identity()
 
-#     if user.id != current_user_id:
-#         return jsonify({'message': 'You can only update your own user profile'}), 403
+    # Get the user object
+    user = User.query.get(current_user_id)
 
-#     data = request.get_json()
-#     new_user_name = data.get('user_name')
-#     new_password = data.get('password')
+    if not user:
+        return jsonify({'message': 'User not found'}, 404)
 
-#     if new_user_name:
-#         user.user_name = new_user_name
+    data = request.get_json()
+    # For example, you might allow users to update their user_name or email
+    user_name = data.get('user_name')
+    email = data.get('email')
 
-#     if new_password:
-#         user.password = sha256_crypt(salt=b"your_salt").hash(new_password)
+    if user_name:
+        user.user_name = user_name
 
-#     db.session.commit()
-#     return jsonify({'message': 'User profile updated successfully'})
+    if email:
+        # Check if the new email is not already in use
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user and existing_user.id != current_user_id:
+            return jsonify({'message': 'Email already in use'}, 409)
+        user.email = email
+
+    # Commit the changes to the database
+    db.session.commit()
+
+    return jsonify({'message': 'User information updated successfully'})
 
 
 # Create Channel endpoint
@@ -341,6 +372,25 @@ def get_group_channels():
     # Return the list of group channels as a JSON response
     return jsonify(group_channel_list)
 
+@app.route('/group_channels/<int:channel_id>', methods=['GET'])
+def get_group_channel_by_id(channel_id):
+    # Retrieve the group channel from the database based on the provided ID
+    group_channel = GroupChannel.query.get(channel_id)  # You need to define the GroupChannel model
+
+    if not group_channel:
+        return jsonify({'message': 'Group channel not found'}, 404)
+
+    # Create a dictionary to store the group channel data
+    group_channel_data = {
+        'user_id': group_channel.user_id,
+        'channel_name': group_channel.channel_name,
+        'description': group_channel.description,
+    }
+
+    # Return the group channel data as a JSON response
+    return jsonify(group_channel_data)
+
+
 # Update Group Channel Description endpoin
 @app.route('/group_channels/<int:channel_id>', methods=['PATCH'])
 def update_group_channel_description(channel_id):
@@ -508,71 +558,6 @@ def get_image_messages():
     return jsonify(image_message_list)
 
 
-# Authentication
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()  # Get JSON data from the request
-
-    email = data.get('email')  # Use .get() to avoid KeyError if the key is not present
-    password = data.get('password')
-
-    user = User.query.filter_by(email=email).first()
-    if user and check_password_hash(user.password, password):
-        # Generate an access token
-        access_token = create_access_token(identity=user.id)  # Use the user's ID as the identity
-
-        # Log in the user
-        login_user(user)
-
-        # Include the access token in the response
-        return jsonify({'access_token': access_token, 'message': 'Login successful'})
-
-    return jsonify({'message': 'Invalid email or password'}, 401)
-
-
-
-@app.route('/signup', methods=['POST'])
-def signup():
-    data = request.get_json()
-
-    # Extract user registration data from the JSON data
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    email = data.get('email')
-    password = data.get('password')
-
-    # Check if the email is not already in use
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
-        return jsonify({'message': 'Email already in use'}, 409)
-
-    # Create a new user with the hashed password
-    new_user = User(
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        password=generate_password_hash(password, method='pbkdf2:sha256')
-    )
-    db.session.add(new_user)
-    db.session.commit()
-
-    # Log in the newly registered user
-    login_user(new_user)
-
-    return jsonify({'message': 'User registered and logged in'})
-
-@app.route('/logout', methods=['GET'])
-@login_required
-def logout():
-    logout_user()  # Log out the user
-    return jsonify({'message': 'Logged out successfully'})
-
-@app.route('/protected_route', methods=['GET'])
-@login_required
-def protected_route():
-    # This route is only accessible to authenticated users
-    return jsonify({'message': 'This is a protected route'})
-
 @app.route('/send_invitation_email', methods=['POST'])
 def send_invitation_email():
     if request.method == 'POST':
@@ -583,7 +568,7 @@ def send_invitation_email():
         unique_token = secrets.token_urlsafe(16)  # Generate a 32-character URL-safe token
         
         # Create the invitation link with the unique token
-        invitation_link = f'http://127.0.0.1:5001/invitations/{channel_id}/accept?token={unique_token}'
+        invitation_link = f'http://127.0.0.1:5000/invitations/{channel_id}/accept?token={unique_token}'
 
         # Create an email message
         subject = 'You are invited to join our group channel'

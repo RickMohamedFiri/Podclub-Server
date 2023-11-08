@@ -2,7 +2,7 @@
 import secrets
 import string
 from app import app, db
-from models import User, Channel, Messages, GroupMessage, ReportedUser, ReportedMessage, Invitation, Admin,UserReport
+from models import User, Channel, Messages, GroupMessage, ReportedUser, ReportedMessage, Admin
 from datetime import datetime
 
 def seed_database():
@@ -19,8 +19,8 @@ def seed_database():
         # user1 = User(user_name='Aleki', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
         # user2 = User(user_name='Jamex', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
 # Create and add user records
-        user1 = User(user_name='Aleki', first_name='Aleki', last_name='Mill', email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
-        user2 = User(user_name='Jamex', first_name='Jamex', last_name='Willy', email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
+        user1 = User(user_name='Aleki',  email='alexi@gmail.com', password='wordpass', verification_token=generate_verification_token(), role='admin')
+        user2 = User(user_name='Jamex',  email='jamex@gmail.com', password='jamojam', verification_token=generate_verification_token(), role='user')
 
         # Add users to the session
         db.session.add_all([user1, user2])
@@ -66,31 +66,14 @@ def seed_database():
         db.session.add_all([reported_message1, reported_message2])
         db.session.commit()
 
-        # Create and add invitation records with current date
-        invitation1 = Invitation(
-            sender_user_id=user1.id,
-            receiver_user_id=user2.id,
-            channel_id=channel1.id,
-            invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
-        )
-        invitation2 = Invitation(
-            sender_user_id=user2.id,
-            receiver_user_id=user1.id,
-            channel_id=channel2.id,
-            invitation_date=datetime.utcnow()  # Provide a default value for invitation_date
-        )
 
-        # Add invitations to the session
-        db.session.add_all([invitation1, invitation2])
-        db.session.commit()
+        # # Create and add UserReport records
+        # user_report1 = UserReport(reporting_user_id=user1.id, reported_user_id=user2.id, reported_content_id=101, action_taken='No action taken')
+        # user_report2 = UserReport(reporting_user_id=user2.id, reported_user_id=user1.id, reported_content_id=102, action_taken='Warning issued')
 
-        # Create and add UserReport records
-        user_report1 = UserReport(reporting_user_id=user1.id, reported_user_id=user2.id, reported_content_id=101, action_taken='No action taken')
-        user_report2 = UserReport(reporting_user_id=user2.id, reported_user_id=user1.id, reported_content_id=102, action_taken='Warning issued')
-
-        # Add UserReport instances to the session
-        db.session.add_all([user_report1, user_report2])
-        db.session.commit()
+        # # Add UserReport instances to the session
+        # db.session.add_all([user_report1, user_report2])
+        # db.session.commit()
         # Create and add admin records
         admin1 = Admin(user_id=user1.id, can_ban_users=True, can_delete_channels=True)
         admin2 = Admin(user_id=user2.id, can_ban_users=True, can_delete_channels=False)
