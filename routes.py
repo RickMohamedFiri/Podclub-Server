@@ -558,110 +558,78 @@ def get_image_messages():
     return jsonify(image_message_list)
 
 
-@app.route('/send_invitation_email', methods=['POST'])
-def send_invitation_email():
-    if request.method == 'POST':
-        recipient_email = request.json.get('recipient_email')
-        channel_id = request.json.get('channel_id')
+# @app.route('/invitations/<int:channel_id>/accept', methods=['GET'])
+# def accept_invitation(channel_id):
+#     # Extract the token from the URL
+#     token = request.args.get('token')
+
+#     # Validate the token
+#     if validate_invitation_token(channel_id, token):
+#         user_id = get_current_user_id()
         
-        # Generate a unique token for this invitation
-        unique_token = secrets.token_urlsafe(16)  # Generate a 32-character URL-safe token
-        
-        # Create the invitation link with the unique token
-        invitation_link = f'http://127.0.0.1:5000/invitations/{channel_id}/accept?token={unique_token}'
-
-        # Create an email message
-        subject = 'You are invited to join our group channel'
-        body = f'Click the following link to join our group channel: {invitation_link}'
-        sender = 'yusramoham99@gmail.com'  # Replace with your email address
-        recipients = [recipient_email]
-
-        msg = Message(subject=subject, sender=sender, recipients=recipients)
-        msg.body = body
-
-        try:
-            mail.send(msg)
-            return jsonify({'message': 'Invitation email sent successfully'})
-        except Exception as e:
-            return jsonify({'message': f'Failed to send the invitation email: {str(e)}'}, 500)
-
-    return jsonify({'message': 'Invalid request'}, 400)
-
-
-
-
-@app.route('/invitations/<int:channel_id>/accept', methods=['GET'])
-def accept_invitation(channel_id):
-    # Extract the token from the URL
-    token = request.args.get('token')
-
-    # Validate the token
-    if validate_invitation_token(channel_id, token):
-        user_id = get_current_user_id()
-        
-        if user_id:
-            # Add the user to the group channel (you need to implement this)
-            # For example, you can create a new record in your database
-            # to associate the user with the group channel.
+#         if user_id:
+#             # Add the user to the group channel (you need to implement this)
+#             # For example, you can create a new record in your database
+#             # to associate the user with the group channel.
             
-            # Ensure that the user is not already a member of the channel
-            if not is_user_member_of_channel(user_id, channel_id):
-                add_user_to_group_channel(user_id, channel_id)
-                return jsonify({'message': 'Invitation accepted successfully'})
-            else:
-                return jsonify({'message': 'User is already a member of the channel'}, 400)
-        else:
-            return jsonify({'message': 'Invalid user or not logged in'}, 400)
-    else:
-        return jsonify({'message': 'Invalid or expired invitation link'}, 400)
-def validate_invitation_token(channel_id, token):
-    # Retrieve the invitation record from the database based on the provided token
-    invitation = Invitation.query.filter_by(group_channel_id=channel_id, token=token).first()
+#             # Ensure that the user is not already a member of the channel
+#             if not is_user_member_of_channel(user_id, channel_id):
+#                 add_user_to_group_channel(user_id, channel_id)
+#                 return jsonify({'message': 'Invitation accepted successfully'})
+#             else:
+#                 return jsonify({'message': 'User is already a member of the channel'}, 400)
+#         else:
+#             return jsonify({'message': 'Invalid user or not logged in'}, 400)
+#     else:
+#         return jsonify({'message': 'Invalid or expired invitation link'}, 400)
+# def validate_invitation_token(channel_id, token):
+#     # Retrieve the invitation record from the database based on the provided token
+#     invitation = Invitation.query.filter_by(group_channel_id=channel_id, token=token).first()
 
-    if invitation:
-        # Check if the token is associated with the specified channel
-        if invitation.group_channel_id == channel_id:
-            # Check if the token hasn't expired
-            expiration_time = invitation.created_at + timedelta(days=1)  # Adjust the expiration time as needed
-            if datetime.utcnow() <= expiration_time:
-                return True  # Token is valid
-            else:
-                return False  # Token has expired
-        else:
-            return False  # Token is not associated with the specified channel
-    else:
-        return False  # Token doesn't exist in the database
+#     if invitation:
+#         # Check if the token is associated with the specified channel
+#         if invitation.group_channel_id == channel_id:
+#             # Check if the token hasn't expired
+#             expiration_time = invitation.created_at + timedelta(days=1)  # Adjust the expiration time as needed
+#             if datetime.utcnow() <= expiration_time:
+#                 return True  # Token is valid
+#             else:
+#                 return False  # Token has expired
+#         else:
+#             return False  # Token is not associated with the specified channel
+#     else:
+#         return False  # Token doesn't exist in the database
     
 
-def get_current_user_id():
-    # function to get the ID of the currently logged-in user
-    # You can use Flask-Login's current_user to get the user object and then access the ID
-    if current_user.is_authenticated:
-        return current_user.id
-    else:
-        return None
+# def get_current_user_id():
+#     # function to get the ID of the currently logged-in user
+#     # You can use Flask-Login's current_user to get the user object and then access the ID
+#     if current_user.is_authenticated:
+#         return current_user.id
+#     else:
+#         return None
 
-def add_user_to_group_channel(user_id, channel_id):
-    # Implement the logic to add the user to the group channel
-    user = User.query.get(user_id)
-    channel = GroupChannel.query.get(channel_id)
+# def add_user_to_group_channel(user_id, channel_id):
+#     # Implement the logic to add the user to the group channel
+#     user = User.query.get(user_id)
+#     channel = GroupChannel.query.get(channel_id)
     
-    if user and channel:
-        # Check if the user is not already a member of the channel
-        if user not in channel.members:
-            channel.members.append(user)
-            db.session.commit()
+#     if user and channel:
+#         # Check if the user is not already a member of the channel
+#         if user not in channel.members:
+#             channel.members.append(user)
+#             db.session.commit()
 
-def is_user_member_of_channel(user_id, channel_id):
-    # Check if the user with the given user_id is a member of the channel with the given channel_id
-    user = User.query.get(user_id)
-    channel = GroupChannel.query.get(channel_id)
+# def is_user_member_of_channel(user_id, channel_id):
+#     # Check if the user with the given user_id is a member of the channel with the given channel_id
+#     user = User.query.get(user_id)
+#     channel = GroupChannel.query.get(channel_id)
 
-    if user and channel:
-        # Assuming there's a many-to-many relationship between users and group channels
-        return channel in user.group_channels
+#     if user and channel:
+#         # Assuming there's a many-to-many relationship between users and group channels
+#         return channel in user.group_channels
 
-    return False
+#     return False
 
 
 ##reported messages endpoints 
@@ -713,3 +681,117 @@ def delete_reported_message(id):
         return jsonify({'message': 'Reported message deleted successfully'})
     else:
         return jsonify({'message': 'Reported message not found'})
+
+
+
+@app.route('/send_invitation_email', methods=['POST'])
+def send_invitation_email():
+    if request.method == 'POST':
+        recipient_email = request.json.get('recipient_email')
+        channel_id = request.json.get('channel_id')
+        
+        # Generate a unique token for this invitation
+        unique_token = secrets.token_urlsafe(16)  # Generate a 32-character URL-safe token
+        
+        # Create the invitation link with the unique token
+        invitation_link = f'http://127.0.0.1:5000/invitations/{channel_id}/accept?token={unique_token}'
+
+        # Create an email message
+        subject = 'You are invited to join our group channel'
+        body = f'Click the following link to join our group channel: {invitation_link}'
+        sender = 'yusramoham99@gmail.com'  # Replace with your email address
+        recipients = [recipient_email]
+
+        msg = Message(subject=subject, sender=sender, recipients=recipients)
+        msg.body = body
+
+        try:
+            mail.send(msg)
+            return jsonify({'message': 'Invitation email sent successfully'})
+        except Exception as e:
+            return jsonify({'message': f'Failed to send the invitation email: {str(e)}'}, 500)
+
+    return jsonify({'message': 'Invalid request'}, 400)   
+
+invitations = {
+    1: {'token': 'your_unique_token_here', 'group_channel': 'Group A'},
+    2: {'token': 'another_unique_token', 'group_channel': 'Group B'},
+}
+def verify_token(channel_id, token):
+    # Verify the token against your data structure (in a real app, check against a database)
+    if channel_id in invitations and invitations[channel_id]['token'] == token:
+        return True
+    return False
+
+@app.route('/invitations/<int:channel_id>/accept', methods=['GET'])
+def accept_invitation(channel_id):
+    # Extract the token from the URL
+    token = request.args.get('token')
+    # Print the channel_id and token for debugging
+    print(f"Received channel_id: {channel_id}")
+    print(f"Received token: {token}")
+
+    # Verify the token
+    if verify_token(channel_id, token):
+        # Add the user to the group channel (simulate by updating the data structure)
+        user = 'New User'
+        invitations[channel_id]['members'] = invitations.get(channel_id, {}).get('members', []) + [user]
+
+        # Redirect to a confirmation page (or you can render an HTML page)
+        return jsonify({'message': 'Invitation accepted successfully'})
+
+    # Invalid token, show an error or redirect to an error page
+    return jsonify({'message': 'Invalid or expired invitation link'}, 400)
+
+# Define the route to create an invitation
+@app.route('/create_invitation', methods=['POST'])
+def create_invitation():
+    # Extract user input from the request
+    sender_user_id = request.json.get('sender_user_id')
+    receiver_user_id = request.json.get('receiver_user_id')
+    channel_id = request.json.get('channel_id')
+
+    # Create the invitation in the database
+    invitation = create_invitation(sender_user_id, receiver_user_id, channel_id)
+
+    return jsonify({'message': 'Invitation created successfully'})
+
+@app.route('/verify_invitation', methods=['GET'])
+def verify_invitation():
+    channel_id = request.args.get('channel_id')
+    token = request.args.get('token')
+
+    if verify_invitation(channel_id, token):
+        return jsonify({'message': 'Invitation is valid'})
+    else:
+        return jsonify({'message': 'Invalid or expired invitation link'}, 400)
+
+# Create an Invitation
+def create_invitation(sender_user_id, receiver_user_id, channel_id):
+    # Generate a unique token for this invitation
+    unique_token = secrets.token_urlsafe(16)  # Generate a 32-character URL-safe token
+
+    # Create an Invitation record in the database
+    invitation = Invitation(
+        sender_user_id=sender_user_id,
+        receiver_user_id=receiver_user_id,
+        channel_id=channel_id,
+        unique_token=unique_token,
+        invitation_date=datetime.now()
+    )
+    db.session.add(invitation)
+    db.session.commit()
+
+    return invitation  # Return the invitation record
+
+# Verify the Invitation
+def verify_invitation(channel_id, token):
+    # Query the database for the invitation
+    invitation = Invitation.query.filter_by(channel_id=channel_id, unique_token=token).first()
+
+    if invitation:
+        # Invitation found, it's valid
+        return True
+    else:
+        # Invitation not found, it's invalid
+        return False

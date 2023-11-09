@@ -192,6 +192,16 @@ class Invitation(db.Model):
     receiver_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     channel_id = db.Column(db.Integer, db.ForeignKey('channels.id'), nullable=False)
     invitation_date = db.Column(db.Date, nullable=False)
+    unique_token = db.Column(db.String(32), nullable=False)  # Adjust the data type and length as needed
+
+    # Other model attributes...
+
+    def __init__(self, sender_user_id, receiver_user_id, channel_id, unique_token, invitation_date):
+        self.sender_user_id = sender_user_id
+        self.receiver_user_id = receiver_user_id
+        self.channel_id = channel_id
+        self.unique_token = unique_token
+        self.invitation_date = invitation_date
 
 
 
