@@ -27,7 +27,7 @@ def message():
     return 'Welcome to the channels API'
 
 
-# ## Authentication
+## Authentication
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -43,11 +43,15 @@ def login():
         # Log in the user
         login_user(user)
 
-        # Include the user_name and access token in the response
-        return jsonify({'user_name': user.user_name, 'access_token': access_token, 'message': 'Login successful'})
+        # Include the user_id, user_name, and access token in the response
+        return jsonify({
+            'user_id': user.id,
+            'user_name': user.user_name,
+            'access_token': access_token,
+            'message': 'Login successful'
+        })
 
     return jsonify({'message': 'Invalid email or password'}, 401)
-
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -75,10 +79,19 @@ def signup():
     # Log in the newly registered user
     login_user(new_user)
 
-    # return jsonify({'message': 'User registered and logged in'})
+    # Return user information including the user id
+    response_data = {
+        'user_id': new_user.id,
+        'user_name': new_user.user_name,
+        'email': new_user.email,
+        'message': 'User registered and logged in'
+    }
+
     # Generate and return an access token for the newly registered user
     access_token = create_access_token(identity=str(new_user.id))
-    return jsonify({'message': 'User registered and logged in', 'access_token': access_token})
+    response_data['access_token'] = access_token
+
+    return jsonify(response_data)
 
 @app.route('/logout', methods=['GET'])
 @login_required
