@@ -74,7 +74,10 @@ def signup():
     # Log in the newly registered user
     login_user(new_user)
 
-    return jsonify({'message': 'User registered and logged in'})
+    # return jsonify({'message': 'User registered and logged in'})
+    # Generate and return an access token for the newly registered user
+    access_token = create_access_token(identity=str(new_user.id))
+    return jsonify({'message': 'User registered and logged in', 'access_token': access_token})
 
 @app.route('/logout', methods=['GET'])
 @login_required
