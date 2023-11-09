@@ -27,26 +27,27 @@ def message():
     return 'Welcome to the channels API'
 
 
-## Authentication
+# ## Authentication
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()  # Get JSON data from the request
+    data = request.get_json()
 
-    email = data.get('email')  # Use .get() to avoid KeyError if the key is not present
+    email = data.get('email')
     password = data.get('password')
 
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password, password):
         # Generate an access token
-        access_token = create_access_token(identity=user.id)  # Use the user's ID as the identity
+        access_token = create_access_token(identity=user.id)
 
         # Log in the user
         login_user(user)
 
-        # Include the access token in the response
-        return jsonify({'access_token': access_token, 'message': 'Login successful'})
+        # Include the user_name and access token in the response
+        return jsonify({'user_name': user.user_name, 'access_token': access_token, 'message': 'Login successful'})
 
     return jsonify({'message': 'Invalid email or password'}, 401)
+
 
 @app.route('/signup', methods=['POST'])
 def signup():
