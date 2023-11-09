@@ -16,9 +16,10 @@ from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity
 app = Flask(__name__)
 # Set the secret key
 app.config['SECRET_KEY'] = '234567qwertyuuio'
-# Configure JWT settings (Note: Store your secret key securely, not hardcoded here)
 app.config['JWT_SECRET_KEY'] = '1234567880087qwertyxk'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=15)
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.login_view = "login"  # Set the view name for the login page
@@ -38,15 +39,9 @@ app.config['SQLALCHEMYDATABASE_URL']=os.environ.get('DATABASE_URL')
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
-
 jwt = JWTManager(app)
-
-# Configure JWT settings 
-app.config['JWT_SECRET_KEY'] = 'secret_key'
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Token expiration time
-
-# Configure Flask-Mail for sending email notifications
 mail = Mail(app)
+
 
 # Configure Flask-Mail for sending emails
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
