@@ -146,10 +146,21 @@ def update_user():
     return jsonify({'message': 'User information updated successfully'})
 
 
+# # Create Channel endpoint
+# @app.route('/channels', methods=['POST'])
+# def create_channel():
+#     new_channel = Channel(name=request.json['name'], description=request.json['description'], user_id=request.json['user_id'])
+#     db.session.add(new_channel)
+#     db.session.commit()
+#     return jsonify({'message': 'Channel created successfully'})
 # Create Channel endpoint
 @app.route('/channels', methods=['POST'])
 def create_channel():
-    new_channel = Channel(name=request.json['name'], description=request.json['description'], user_id=request.json['user_id'])
+    new_channel = Channel(
+        name=request.get_json()['name'],
+        description=request.get_json()['description'],
+        user_id=request.get_json()['user_id']
+    )
     db.session.add(new_channel)
     db.session.commit()
     return jsonify({'message': 'Channel created successfully'})
