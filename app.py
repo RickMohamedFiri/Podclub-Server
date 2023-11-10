@@ -17,7 +17,7 @@ app = Flask(__name__)
 # Set the secret key
 app.config['SECRET_KEY'] = '234567qwertyuuio'
 app.config['JWT_SECRET_KEY'] = '1234567880087qwertyxk'
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=5)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=15)
 
 # Initialize Flask-Login
